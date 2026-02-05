@@ -1,0 +1,38 @@
+{
+  "dependencies": {
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/express-winston": "^3.0.4",
+    "@types/http-proxy-middleware": "^0.19.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.0.10",
+    "@types/passport": "~1.0.17",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/passport-local": "~1.0.38",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "helmet": "^8.1.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "npm run build:packages && npm run build:services",
+    "build:packages": "npm run build:common && npm run build:database",
+    "build:common": "tsc -p packages/common/tsconfig.json",
+    "build:database": "tsc -p packages/database/tsconfig.json",
+    "build:services": "npm run build:api-gateway && npm run build:auth-service && npm run build:chat-service && npm run build:message-storage-service && npm run build:presence-service",
+    "build:api-gateway": "tsc -p services/api-gateway/tsconfig.json",
+    "build:auth-service": "tsc -p services/auth-service/tsconfig.json",
+    "build:chat-service": "tsc -p services/chat-service/tsconfig.json",
+    "build:message-storage-service": "tsc -p services/message-storage-service/tsconfig.json",
+    "build:presence-service": "tsc -p services/presence-service/tsconfig.json",
+    "postinstall": "typesync || true"
+  }
+}

@@ -29,3 +29,6 @@ coverage/
 
 # Uploads
 .uploads/
+
+# Local reference docs (any .reference/ folder)
+.reference/
