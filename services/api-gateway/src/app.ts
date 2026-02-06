@@ -17,8 +17,6 @@ expressWinston.responseWhitelist.push('body');
 
 const app = express();
 
-const port = process.env.API_GATEWAY_PORT || 3000;
-
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
@@ -40,9 +38,5 @@ app.use(expressWinston.errorLogger({
   winstonInstance: logger,
   msg: 'HTTP {{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms',
 }));
-
-app.listen(port, () => {
-  console.log('Gateway Service is running on port ' + port);
-});
 
 export default app;
