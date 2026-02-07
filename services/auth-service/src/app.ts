@@ -7,7 +7,6 @@ import authRoutes from './routes/auth.routes';
 import { errorMiddleware } from './middleware/error.middleware';
 
 const app = express();
-export const users: ChatUser[] = []; // This is temporary, will use a database later.
 
 const port = process.env.AUTH_SERVICE_PORT || 3001;
 
