@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { jwtAuth } from './middleware/auth.middleware';
@@ -34,6 +34,9 @@ app.use(expressWinston.logger({
 app.use(jwtAuth);
 
 app.use("/api", proxyMiddleware);
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ message: 'OK' });
+});
 
 app.use(errorMiddleware);
 

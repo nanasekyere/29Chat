@@ -18,16 +18,27 @@
 #          package-lock.json first so Docker can CACHE this
 #          layer — dependencies only reinstall when those
 #          files change, not when your source code changes.
+#
+#          With npm workspaces, npm ci needs to see EVERY
+#          workspace package.json to set up symlinks correctly.
 # ----------------------------------------------------------
 FROM node:22-alpine AS base
 
 WORKDIR /app
 
-# Copy dependency manifests only (for layer caching)
+# Copy root dependency manifests
 COPY package.json package-lock.json ./
 
-# npm ci = "clean install" — installs the exact versions
-# from package-lock.json (faster and more reliable than npm install)
+# Copy workspace package.json files
+COPY packages/common/package.json ./packages/common/
+COPY packages/database/package.json ./packages/database/
+COPY services/api-gateway/package.json ./services/api-gateway/
+COPY services/auth-service/package.json ./services/auth-service/
+COPY services/chat-service/package.json ./services/chat-service/
+COPY services/message-storage-service/package.json ./services/message-storage-service/
+COPY services/presence-service/package.json ./services/presence-service/
+
+# installs the exact versions from package-lock.json
 RUN npm ci
 
 # ----------------------------------------------------------
@@ -73,8 +84,19 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-# Copy dependency manifests and install production-only deps
+# Copy root dependency manifests
 COPY package.json package-lock.json ./
+
+# Copy workspace package.json files (npm ci needs these to create symlinks)
+COPY packages/common/package.json ./packages/common/
+COPY packages/database/package.json ./packages/database/
+COPY services/api-gateway/package.json ./services/api-gateway/
+COPY services/auth-service/package.json ./services/auth-service/
+COPY services/chat-service/package.json ./services/chat-service/
+COPY services/message-storage-service/package.json ./services/message-storage-service/
+COPY services/presence-service/package.json ./services/presence-service/
+
+# Install production-only deps (also creates workspace symlinks)
 RUN npm ci --omit=dev
 
 # Copy compiled output from the build stage

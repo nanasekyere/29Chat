@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import passport from '../passport';
-import { ChatUser } from 'common';
+import { ChatUser } from '@29chat/common';
 import * as authService from '../services/auth.service';
 import * as tokenService from '../services/token.service';
 

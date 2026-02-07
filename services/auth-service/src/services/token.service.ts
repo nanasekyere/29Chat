@@ -1,4 +1,4 @@
-import { ChatUser } from 'common';
+import { ChatUser } from '@29chat/common';
 import jwt from 'jsonwebtoken';
 
 export function createToken(user: ChatUser): string {

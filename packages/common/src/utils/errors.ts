@@ -7,4 +7,8 @@ export class AppError extends Error {
     this.name = 'AppError';
     Object.setPrototypeOf(this, AppError.prototype);
   }
+
+  static create(message: string, statusCode: number = 500): AppError {
+    return new AppError(message, statusCode);
+  }
 }
