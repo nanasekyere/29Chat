@@ -1,44 +1,67 @@
-import createProxyMiddleware from 'http-proxy-middleware';
-import { Router, Request, Response, NextFunction } from 'express';
+import { createProxyMiddleware, Options, fixRequestBody } from 'http-proxy-middleware';
+import { Router, RequestHandler } from 'express';
+import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
+import logger from '../utils/logger';
 
 const router = Router();
 
 const host = process.env.HOST || 'localhost';
+const authServicePort = process.env.AUTH_SERVICE_PORT || 3001;
+const chatServicePort = process.env.CHAT_SERVICE_PORT || 3002;
+const messageServicePort = process.env.MESSAGE_SERVICE_PORT || 3003;
+const presenceServicePort = process.env.PRESENCE_SERVICE_PORT || 3004;
 
-const services: Record<string, string> = {
-  auth: `http://${host}:3001`,
-  chat: `http://${host}:3002`,
-  message: `http://${host}:3003`,
-  presence: `http://${host}:3004`,
+const services = {
+  auth: {
+    target: `http://${host}:${authServicePort}`,
+    pathRewrite: { '^/auth': '' },
+  },
+  chat: {
+    target: `http://${host}:${chatServicePort}`,
+    pathRewrite: { '^/chat': '' },
+  },
+  message: {
+    target: `http://${host}:${messageServicePort}`,
+    pathRewrite: { '^/message': '' },
+  },
+  presence: {
+    target: `http://${host}:${presenceServicePort}`,
+    pathRewrite: { '^/presence': '' },
+  },
 };
 
-router.use('/:service/*', (req: Request, res: Response, next: NextFunction) => {
-  const service = req.params.service;
-  const target = services[service as keyof typeof services];
-  if (!target) {
-    return res.status(503).json({ message: 'Service not found' });
-  }
-
-  const proxy = createProxyMiddleware({
+const createProxy = ({ target, pathRewrite }: { target: string, pathRewrite: Record<string, string> }): RequestHandler => {
+  const options: Options = {
     target,
     changeOrigin: true,
     timeout: 10000,
     proxyTimeout: 10000,
-    pathRewrite: {
-      [`^/${service}`]: '',
-    },
-    onError: (err: any, req: Request, res: Response) => {
-      console.error(err);
-      res.status(502).json({ message: `Proxy error on Service: ${service}`});
-    },
-    onProxyReq: (proxyReq: any, req: Request, res: Response) => {
-      const correlationId = req.headers['x-correlation-id'] || crypto.randomUUID();
-      proxyReq.setHeader('x-correlation-id', correlationId);
-      proxyReq.setHeader('x-forwarded-by', 'api-gateway');
-    },
-  });
+    pathRewrite,
 
-  proxy(req, res, next);
-});
+    on: {
+      error: (err, req, res) => {
+        logger.error('Proxy error', { error: err.message, target });
+        if ('status' in res && typeof res.status === 'function') {
+          res.status(502).json({ message: `Proxy error on Service: ${target}`});
+        }
+      },
+      proxyReq: (proxyReq: ClientRequest, req: IncomingMessage, res: ServerResponse) => {
+        fixRequestBody(proxyReq, req);
+
+        req.headers.authorization && proxyReq.setHeader('authorization', req.headers.authorization);
+        const correlationId = req.headers['x-correlation-id'] || crypto.randomUUID();
+        proxyReq.setHeader('x-correlation-id', correlationId);
+        proxyReq.setHeader('x-forwarded-by', 'api-gateway');
+      },
+    },
+  }
+
+  return createProxyMiddleware(options);
+}
+
+router.use('/auth', createProxy(services.auth));
+router.use('/chat', createProxy(services.chat));
+router.use('/message', createProxy(services.message));
+router.use('/presence', createProxy(services.presence));
 
 export default router;
