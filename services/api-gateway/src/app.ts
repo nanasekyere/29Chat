@@ -5,6 +5,7 @@ import { jwtAuth } from './middleware/auth.middleware';
 import winston from 'winston';
 import expressWinston from 'express-winston';
 import proxyMiddleware from './middleware/proxy.middleware';
+import { errorMiddleware } from './middleware/error.middleware';
 
 const logger = winston.createLogger({
   level: 'info',
@@ -34,9 +35,6 @@ app.use(jwtAuth);
 
 app.use("/api", proxyMiddleware);
 
-app.use(expressWinston.errorLogger({
-  winstonInstance: logger,
-  msg: 'HTTP {{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms',
-}));
+app.use(errorMiddleware);
 
 export default app;

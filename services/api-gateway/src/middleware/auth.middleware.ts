@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import type { ChatUser } from 'common';
 
 const excludedPaths = ['/auth'];
 
@@ -14,6 +15,6 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-  req.user = decoded;
+  req.user = decoded as ChatUser;
   next();
 };
