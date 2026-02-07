@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "strict": true
   },
   "include": ["src/**/*", "../../packages/common/src/types/express.d.ts"],
   "exclude": ["node_modules", "dist"]

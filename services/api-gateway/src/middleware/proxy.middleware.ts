@@ -49,6 +49,8 @@ const createProxy = ({ target, pathRewrite }: { target: string, pathRewrite: Rec
         fixRequestBody(proxyReq, req);
 
         req.headers.authorization && proxyReq.setHeader('authorization', req.headers.authorization);
+        req.headers['x-user-id'] && proxyReq.setHeader('x-user-id', req.headers['x-user-id']);
+        req.headers['x-user-email'] && proxyReq.setHeader('x-user-email', req.headers['x-user-email']);
         const correlationId = req.headers['x-correlation-id'] || crypto.randomUUID();
         proxyReq.setHeader('x-correlation-id', correlationId);
         proxyReq.setHeader('x-forwarded-by', 'api-gateway');

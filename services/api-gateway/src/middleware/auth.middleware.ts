@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { ChatUser, AppError } from '@29chat/common';
+import { JWTPayload, AppError } from '@29chat/common';
 
 
-const excludedPaths = ['auth'];
+const excludedPaths = ['auth/register', 'auth/login'];
 
 export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
-  const isPublic = excludedPaths.some((path) => req.path.startsWith('/api/' + path));
+  const isPublic = excludedPaths.some((path) => req.path === '/api/' + path);
   if (isPublic) {
     return next();
   }
@@ -18,7 +18,10 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-    req.user = decoded as ChatUser;
+    const user = decoded as JWTPayload;
+    req.user = user;
+    req.headers['x-user-id'] = user.id;
+    req.headers['x-user-email'] = user.email;
     next();
   } catch (error) {
     if (error instanceof AppError) {

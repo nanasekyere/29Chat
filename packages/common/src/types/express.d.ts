@@ -1,11 +1,11 @@
-import type { ChatUser } from './user.types';
+import type { JWTPayload } from './auth.types';
 
 declare global {
   namespace Express {
-    interface User extends ChatUser {}
+    interface User extends JWTPayload {}
 
     interface Request {
-      user?: ChatUser;
+      user?: JWTPayload;
     }
   }
 }
