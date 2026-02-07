@@ -1,4 +1,4 @@
-import type { ChatUser } from "common";
+import type { ChatUser } from './user.types';
 
 declare global {
   namespace Express {
