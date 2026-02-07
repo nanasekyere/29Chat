@@ -1,4 +1,4 @@
-import { ChatUser, AppError } from 'common';
+import { ChatUser, AppError } from '@29chat/common';
 import bcrypt from 'bcrypt';
 import { users } from '../app';
 import { createToken } from './token.service';

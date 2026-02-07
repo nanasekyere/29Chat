@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { AppError } from 'common';
+import { AppError } from '@29chat/common';
 
 export const errorMiddleware = (
   err: Error,

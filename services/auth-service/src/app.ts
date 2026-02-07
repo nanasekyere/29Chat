@@ -2,7 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import passport from './passport';
-import { ChatUser } from 'common';
+import { ChatUser } from '@29chat/common';
 import authRoutes from './routes/auth.routes';
 import { errorMiddleware } from './middleware/error.middleware';
 

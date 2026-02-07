@@ -1,0 +1,7 @@
+{
+  "name": "@29chat/chat-service",
+  "version": "1.0.0",
+  "dependencies": {
+    "@29chat/common": "*"
+  }
+}
