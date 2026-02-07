@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import type { ChatUser } from 'common';
+import { ChatUser, AppError } from '@29chat/common';
 
-const excludedPaths = ['/auth'];
+
+const excludedPaths = ['auth'];
 
 export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
   const isPublic = excludedPaths.some((path) => req.path.startsWith('/api/' + path));
@@ -14,7 +15,16 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
   if (!token) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
-  const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-  req.user = decoded as ChatUser;
-  next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    req.user = decoded as ChatUser;
+    next();
+  } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(AppError.create('Unauthorized', 401));
+    }
+  }
 };

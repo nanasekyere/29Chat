@@ -1,20 +1,11 @@
 import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import { jwtAuth } from './middleware/auth.middleware';
-import winston from 'winston';
 import expressWinston from 'express-winston';
+import logger from './utils/logger';
+import { jwtAuth } from './middleware/auth.middleware';
 import proxyMiddleware from './middleware/proxy.middleware';
 import { errorMiddleware } from './middleware/error.middleware';
-
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  transports: [new winston.transports.Console()],
-});
-
-expressWinston.requestWhitelist.push('body');
-expressWinston.responseWhitelist.push('body');
 
 const app = express();
 
@@ -27,7 +18,6 @@ app.use(expressWinston.logger({
   winstonInstance: logger,
   meta: true,
   msg: 'HTTP {{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms',
-  expressFormat: true,
   colorize: false,
 }));
 
@@ -37,6 +27,10 @@ app.use("/api", proxyMiddleware);
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ message: 'OK' });
 });
+
+app.use(expressWinston.errorLogger({
+  winstonInstance: logger,
+}));
 
 app.use(errorMiddleware);
 
