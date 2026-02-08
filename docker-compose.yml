@@ -15,12 +15,12 @@ services:
       - "5434:5432"
     environment:
       POSTGRES_USER: ${AUTH_DB_USER:-authuser}
-      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-***REDACTED***}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
       POSTGRES_DB: ${AUTH_DB_NAME:-auth}
     volumes:
       - auth_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER:-authuser}"]
+      test: ["CMD-SHELL", "pg_isready -U ${AUTH_DB_USER:-authuser} -d ${AUTH_DB_NAME:-auth}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -34,13 +34,13 @@ services:
     ports:
       - "5435:5432"
     environment:
-      POSTGRES_USER: ${MESSAGE_DB_USER:-messageuser}
-      POSTGRES_PASSWORD: ${MESSAGE_DB_PASSWORD:-***REDACTED***}
-      POSTGRES_DB: ${MESSAGE_DB_NAME:-messages}
+      POSTGRES_USER: ${MESSAGES_DB_USER:-messageuser}
+      POSTGRES_PASSWORD: ${MESSAGES_DB_PASSWORD}
+      POSTGRES_DB: ${MESSAGES_DB_NAME:-messages}
     volumes:
       - message_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${MESSAGE_DB_USER:-messageuser}"]
+      test: ["CMD-SHELL", "pg_isready -U ${MESSAGES_DB_USER:-messageuser} -d ${MESSAGES_DB_NAME:-messages}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -70,7 +70,7 @@ services:
       - "15672:15672"   # Management UI (http://localhost:15672)
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -96,16 +96,16 @@ services:
       CHAT_SERVICE_URL: http://chat-service:${CHAT_SERVICE_PORT:-3002}
       MESSAGE_STORAGE_SERVICE_URL: http://message-storage-service:${MESSAGE_STORAGE_SERVICE_PORT:-3003}
       PRESENCE_SERVICE_URL: http://presence-service:${PRESENCE_SERVICE_PORT:-3004}
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
-    depends_on:
-      auth-service:
-        condition: service_started
-      chat-service:
-        condition: service_started
-      message-storage-service:
-        condition: service_started
-      presence-service:
-        condition: service_started
+      JWT_SECRET: ${JWT_SECRET}
+    # depends_on:
+    #   auth-service:
+    #     condition: service_started
+    #   chat-service:
+    #     condition: service_started
+    #   message-storage-service:
+    #     condition: service_started
+    #   presence-service:
+    #     condition: service_started
     networks:
       - chat-network
 
@@ -118,11 +118,11 @@ services:
       - "${AUTH_SERVICE_PORT:-3001}:${AUTH_SERVICE_PORT:-3001}"
     environment:
       AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-3001}
-      DATABASE_URL: postgresql://${AUTH_DB_USER:-authuser}:${AUTH_DB_PASSWORD:-***REDACTED***}@auth-db:5432/${AUTH_DB_NAME:-auth}
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
-    depends_on:
-      auth-db:
-        condition: service_healthy
+      AUTH_DB_URL: postgresql://${AUTH_DB_USER:-authuser}:${AUTH_DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME:-auth}
+      JWT_SECRET: ${JWT_SECRET}
+    # depends_on:
+    #   auth-db:
+    #     condition: service_healthy
     networks:
       - chat-network
 
@@ -136,13 +136,13 @@ services:
     environment:
       CHAT_SERVICE_PORT: ${CHAT_SERVICE_PORT:-3002}
       REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
-    depends_on:
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+    # depends_on:
+    #   redis:
+    #     condition: service_healthy
+    #   rabbitmq:
+    #     condition: service_healthy
     networks:
       - chat-network
 
@@ -155,16 +155,16 @@ services:
       - "${MESSAGE_STORAGE_SERVICE_PORT:-3003}:${MESSAGE_STORAGE_SERVICE_PORT:-3003}"
     environment:
       MESSAGE_STORAGE_SERVICE_PORT: ${MESSAGE_STORAGE_SERVICE_PORT:-3003}
-      DATABASE_URL: postgresql://${MESSAGE_DB_USER:-messageuser}:${MESSAGE_DB_PASSWORD:-***REDACTED***}@message-db:5432/${MESSAGE_DB_NAME:-messages}
+      MESSAGES_DB_URL: postgresql://${MESSAGES_DB_USER:-messageuser}:${MESSAGES_DB_PASSWORD}@message-db:5432/${MESSAGES_DB_NAME:-messages}
       REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
-    depends_on:
-      message-db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS}@rabbitmq:5672
+    # depends_on:
+    #   message-db:
+    #     condition: service_healthy
+    #   redis:
+    #     condition: service_healthy
+    #   rabbitmq:
+    #     condition: service_healthy
     networks:
       - chat-network
 
@@ -178,9 +178,9 @@ services:
     environment:
       PRESENCE_SERVICE_PORT: ${PRESENCE_SERVICE_PORT:-3004}
       REDIS_URL: redis://redis:6379
-    depends_on:
-      redis:
-        condition: service_healthy
+    # depends_on:
+    #   redis:
+    #     condition: service_healthy
     networks:
       - chat-network
 

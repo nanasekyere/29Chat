@@ -1,7 +1,7 @@
 export interface ChatUser {
     id: string;
     email: string;
-    password?: string;
+    password: string;
     name: string;
     avatar?: string;
     status: 'online' | 'offline' | 'away' | 'busy';

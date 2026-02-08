@@ -5,27 +5,21 @@ import logger from '../utils/logger';
 
 const router = Router();
 
-const host = process.env.HOST || 'localhost';
-const authServicePort = process.env.AUTH_SERVICE_PORT || 3001;
-const chatServicePort = process.env.CHAT_SERVICE_PORT || 3002;
-const messageServicePort = process.env.MESSAGE_SERVICE_PORT || 3003;
-const presenceServicePort = process.env.PRESENCE_SERVICE_PORT || 3004;
-
 const services = {
   auth: {
-    target: `http://${host}:${authServicePort}`,
+    target: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
     pathRewrite: { '^/auth': '' },
   },
   chat: {
-    target: `http://${host}:${chatServicePort}`,
+    target: process.env.CHAT_SERVICE_URL || 'http://localhost:3002',
     pathRewrite: { '^/chat': '' },
   },
   message: {
-    target: `http://${host}:${messageServicePort}`,
+    target: process.env.MESSAGE_STORAGE_SERVICE_URL || 'http://localhost:3003',
     pathRewrite: { '^/message': '' },
   },
   presence: {
-    target: `http://${host}:${presenceServicePort}`,
+    target: process.env.PRESENCE_SERVICE_URL || 'http://localhost:3004',
     pathRewrite: { '^/presence': '' },
   },
 };
@@ -46,14 +40,13 @@ const createProxy = ({ target, pathRewrite }: { target: string, pathRewrite: Rec
         }
       },
       proxyReq: (proxyReq: ClientRequest, req: IncomingMessage, res: ServerResponse) => {
-        fixRequestBody(proxyReq, req);
-
         req.headers.authorization && proxyReq.setHeader('authorization', req.headers.authorization);
         req.headers['x-user-id'] && proxyReq.setHeader('x-user-id', req.headers['x-user-id']);
         req.headers['x-user-email'] && proxyReq.setHeader('x-user-email', req.headers['x-user-email']);
         const correlationId = req.headers['x-correlation-id'] || crypto.randomUUID();
         proxyReq.setHeader('x-correlation-id', correlationId);
         proxyReq.setHeader('x-forwarded-by', 'api-gateway');
+        fixRequestBody(proxyReq, req);
       },
     },
   }
