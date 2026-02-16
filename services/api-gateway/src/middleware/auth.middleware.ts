@@ -17,7 +17,7 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
     const user = decoded as JWTPayload;
     req.user = user;
     req.headers['x-user-id'] = user.id;

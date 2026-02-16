@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import db from '.';
-import { usersTable } from './schema';
+import db from '..';
+import { usersTable } from '../schema';
 import { ChatUser } from '@29chat/common';
 
 export const getUserByEmail = async (email: string): Promise<ChatUser | null> => {

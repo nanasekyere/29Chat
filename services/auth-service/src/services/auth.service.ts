@@ -1,7 +1,7 @@
 import { ChatUser, AppError } from "@29chat/common";
 import bcrypt from "bcrypt";
-import { createToken } from "./token.service";
-import { createUser, getUserByEmail } from "@29chat/database";
+import { createAccessToken, createRefreshToken } from "./token.service";
+import { usersQueries } from "@29chat/database";
 
 export async function register({
   email,
@@ -12,7 +12,7 @@ export async function register({
   password: string;
   name: string;
 }) {
-  const existingUser = await getUserByEmail(email);
+  const existingUser = await usersQueries.getUserByEmail(email);
   if (existingUser) {
     throw new AppError("Email already registered", 409);
   }
@@ -31,7 +31,7 @@ export async function register({
   };
 
   try {
-    await createUser(user);
+    await usersQueries.createUser(user);
   } catch (error) {
     const dbError = error as { code?: string };
     if (dbError.code) {
@@ -40,8 +40,9 @@ export async function register({
     throw new AppError("Failed to create user", 500);
   }
 
-  const token = createToken(user);
+  const token = createAccessToken(user);
+  const refreshToken = createRefreshToken(user);
   const { password: _, ...sanitizedUser } = user;
 
-  return { user: sanitizedUser, token };
+  return { user: sanitizedUser, token, refreshToken };
 }

@@ -20,8 +20,13 @@ export function login(req: Request, res: Response, next: NextFunction): void {
     if (err) return next(err);
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
-    const token = tokenService.createToken(user);
+    const token = tokenService.createAccessToken(user);
+    const refreshToken = tokenService.createRefreshToken(user);
     const { password: _, ...sanitizedUser } = user;
-    res.status(200).json({ user: sanitizedUser, token });
+    res.status(200).json({ user: sanitizedUser, token, refreshToken });
   })(req, res, next);
+}
+
+export async function refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+  
 }

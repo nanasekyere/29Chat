@@ -1,6 +1,9 @@
 // Auth DB
 export { default as authDb } from './auth-db';
-export * from './auth-db/queries';
+import * as usersQueries from './auth-db/queries/users.queries';
+import * as refreshTokensQueries from './auth-db/queries/refresh-tokens.queries';
+export { usersQueries, refreshTokensQueries };
+
 
 // Messages DB
 export { default as messagesDb } from './messages-db';
