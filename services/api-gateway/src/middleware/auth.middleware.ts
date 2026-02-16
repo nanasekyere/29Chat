@@ -20,8 +20,6 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
     const user = decoded as JWTPayload;
     req.user = user;
-    req.headers['x-user-id'] = user.id;
-    req.headers['x-user-email'] = user.email;
     next();
   } catch (error) {
     if (error instanceof AppError) {

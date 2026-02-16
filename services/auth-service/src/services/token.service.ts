@@ -2,7 +2,7 @@ import { AppError, ChatUser, JWTPayload } from '@29chat/common';
 import jwt from 'jsonwebtoken';
 
 export function createAccessToken(user: ChatUser): string {
-  const payload: JWTPayload = { id: user.id, email: user.email };
+  const payload: JWTPayload = { id: user.id, email: user.email, name: user.name };
   const secret = process.env.JWT_SECRET || 'secret';
   const expiresIn = (process.env.JWT_EXPIRES_IN || '1h') as jwt.SignOptions['expiresIn'];
 
@@ -10,7 +10,7 @@ export function createAccessToken(user: ChatUser): string {
 }
 
 export function createRefreshToken(user: ChatUser): string {
-  const payload: JWTPayload = { id: user.id, email: user.email };
+  const payload: JWTPayload = { id: user.id, email: user.email, name: user.name };
   const secret = process.env.JWT_REFRESH_SECRET || 'secret';
   const expiresIn = (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'];
 
