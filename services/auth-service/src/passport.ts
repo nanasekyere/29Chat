@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import bcrypt from "bcrypt";
-import { getUserByEmail, getUserById } from "@29chat/database";
+import { usersQueries } from "@29chat/database";
 
 passport.use(
   new LocalStrategy(
@@ -12,7 +12,7 @@ passport.use(
     },
     async (email, password, done) => {
       try {
-        const user = await getUserByEmail(email);
+        const user = await usersQueries.getUserByEmail(email);
 
         if (!user)
           return done(null, false, { message: "Invalid email or password" });
@@ -38,7 +38,7 @@ const jwtOptions = {
 passport.use(
   new JwtStrategy(jwtOptions, async (jwtPayload, done) => {
     try {
-      const user = await getUserById(jwtPayload.id);
+      const user = await usersQueries.getUserById(jwtPayload.id);
       if (user) {
         return done(null, user);
       }

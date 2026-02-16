@@ -8,8 +8,12 @@ const router = Router();
 router.post('/register', validateRequest(authSchema), register);
 router.post('/login', validateRequest(authSchema), login);
 
-router.post('/refresh')
-router.post('/logout')
+router.post('/refresh', (_req, res) => {
+  res.status(501).json({ message: 'Not implemented' });
+});
+router.post('/logout', (_req, res) => {
+  res.status(501).json({ message: 'Not implemented' });
+});
 
 
 export default router;

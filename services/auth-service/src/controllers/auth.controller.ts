@@ -8,8 +8,8 @@ export async function register(req: Request, res: Response, next: NextFunction):
   const { email, password, name } = req.body;
 
   try {
-    const { user, token } = await authService.register({ email, password, name });
-    res.status(201).json({ user, token });
+    const { user, token, refreshToken } = await authService.register({ email, password, name });
+    res.status(201).json({ user, token, refreshToken });
   } catch (error) {
     next(error);
   }

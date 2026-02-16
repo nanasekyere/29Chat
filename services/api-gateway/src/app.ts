@@ -21,12 +21,13 @@ app.use(expressWinston.logger({
   colorize: false,
 }));
 
-app.use(jwtAuth);
-
-app.use("/api", proxyMiddleware);
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ message: 'OK' });
 });
+
+app.use(jwtAuth);
+
+app.use("/api", proxyMiddleware);
 
 app.use(expressWinston.errorLogger({
   winstonInstance: logger,

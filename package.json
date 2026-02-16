@@ -34,9 +34,12 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "~1.0.38",
     "@types/pg": "^8.16.0",
+    "@types/supertest": "^6.0.3",
     "dotenv": "^17.2.4",
     "drizzle-kit": "^0.31.8",
-    "typescript": "^5.9.3"
+    "supertest": "^7.2.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   },
   "scripts": {
     "build": "npm run build:packages && npm run build:services",
@@ -49,6 +52,7 @@
     "build:chat-service": "tsc -p services/chat-service/tsconfig.json",
     "build:message-storage-service": "tsc -p services/message-storage-service/tsconfig.json",
     "build:presence-service": "tsc -p services/presence-service/tsconfig.json",
-    "postinstall": "typesync || true"
+    "postinstall": "typesync || true",
+    "test": "npm test --workspaces --if-present"
   }
 }
