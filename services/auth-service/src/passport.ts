@@ -1,6 +1,5 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import bcrypt from "bcrypt";
 import { usersQueries } from "@29chat/database";
 
@@ -28,25 +27,6 @@ passport.use(
       }
     },
   ),
-);
-
-const jwtOptions = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.JWT_SECRET || "secret",
-};
-
-passport.use(
-  new JwtStrategy(jwtOptions, async (jwtPayload, done) => {
-    try {
-      const user = await usersQueries.getUserById(jwtPayload.id);
-      if (user) {
-        return done(null, user);
-      }
-      return done(null, false);
-    } catch (error) {
-      return done(error);
-    }
-  }),
 );
 
 export default passport;
