@@ -32,6 +32,7 @@ coverage/
 
 # Local reference docs (any .reference/ folder)
 .reference/
+.*/
 
 # Docker
 docker-compose.override.yml
