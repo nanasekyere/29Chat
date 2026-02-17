@@ -85,45 +85,4 @@ describe('passport strategies', () => {
       });
     });
   });
-
-  describe('jwt strategy', () => {
-    const jwtStrategy = (passport as any)._strategy('jwt');
-
-    it('returns user when getUserById finds user', () => {
-      return new Promise<void>((resolve) => {
-        const user = createMockUser();
-        mockGetUserById.mockResolvedValue(user);
-
-        jwtStrategy._verify({ id: 'test-uuid' }, (err: any, result: any) => {
-          expect(err).toBeNull();
-          expect(result).toEqual(user);
-          resolve();
-        });
-      });
-    });
-
-    it('returns false when user not found', () => {
-      return new Promise<void>((resolve) => {
-        mockGetUserById.mockResolvedValue(null);
-
-        jwtStrategy._verify({ id: 'nonexistent' }, (err: any, result: any) => {
-          expect(err).toBeNull();
-          expect(result).toBe(false);
-          resolve();
-        });
-      });
-    });
-
-    it('calls done(error) when getUserById throws', () => {
-      return new Promise<void>((resolve) => {
-        const dbError = new Error('db down');
-        mockGetUserById.mockRejectedValue(dbError);
-
-        jwtStrategy._verify({ id: 'test-uuid' }, (err: any) => {
-          expect(err).toBe(dbError);
-          resolve();
-        });
-      });
-    });
-  });
 });

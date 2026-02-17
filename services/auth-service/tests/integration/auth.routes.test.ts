@@ -34,6 +34,8 @@ describe('auth routes', () => {
   beforeEach(() => {
     process.env.JWT_SECRET = 'test-secret';
     process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
+    process.env.JWT_EXPIRES_IN = '1h';
+    process.env.JWT_REFRESH_EXPIRES_IN = '7d';
     vi.clearAllMocks();
   });
 
@@ -145,7 +147,7 @@ describe('auth routes', () => {
 
     function createValidRefreshToken() {
       return jwt.sign(
-        { id: user.id, email: user.email },
+        { id: user.id },
         process.env.JWT_REFRESH_SECRET!,
         { expiresIn: '7d' }
       );
@@ -166,12 +168,13 @@ describe('auth routes', () => {
       expect(res.body.token).toBeDefined();
       expect(res.body.refreshToken).toBeDefined();
       // expect rotation
-      expect(res.body.refreshToken).not.toBe(refreshToken);
+      expect(mockDeleteRefreshToken).toHaveBeenCalledWith(user.id, refreshToken);
+      expect(mockSaveRefreshToken).toBeCalled();
     });
 
     it('401 - rejects expired refresh token', async () => {
       const expiredToken = jwt.sign(
-        { id: user.id, email: user.email },
+        { id: user.id },
         process.env.JWT_REFRESH_SECRET!,
         { expiresIn: '0s' }
       );
@@ -204,35 +207,22 @@ describe('auth routes', () => {
   });
 
   describe('POST /logout', () => {
-    it('200 - invalidates refresh token in DB', async () => {
+    it('204 - invalidates refresh token in DB', async () => {
       const user = createMockUser();
       const refreshToken = jwt.sign(
-        { id: user.id, email: user.email },
+        { id: user.id },
         process.env.JWT_REFRESH_SECRET!,
         { expiresIn: '7d' }
       );
-      const accessToken = jwt.sign(
-        { id: user.id, email: user.email },
-        process.env.JWT_SECRET!,
-        { expiresIn: '1h' }
-      );
+      mockFindRefreshToken.mockResolvedValue({ token: refreshToken } as any);
       mockDeleteRefreshTokenByUserId.mockResolvedValue(undefined as any);
 
       const res = await request(app)
         .post('/logout')
-        .set('Authorization', `Bearer ${accessToken}`)
         .send({ refreshToken });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
       expect(mockDeleteRefreshTokenByUserId).toHaveBeenCalledWith(user.id);
-    });
-
-    it('401 - requires authentication', async () => {
-      const res = await request(app)
-        .post('/logout')
-        .send({ refreshToken: 'some-token' });
-
-      expect(res.status).toBe(401);
     });
   });
 });

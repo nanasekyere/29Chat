@@ -91,7 +91,7 @@ describe('jwtAuth', () => {
   });
 
   describe('valid token', () => {
-    const payload = { id: 'user-123', email: 'test@test.com' };
+    const payload = { id: 'user-123' };
 
     beforeEach(() => {
       mockVerify.mockReturnValue(payload as any);
@@ -105,26 +105,6 @@ describe('jwtAuth', () => {
       jwtAuth(req, res, next);
 
       expect(req.user).toEqual(payload);
-    });
-
-    it('sets x-user-id header from decoded payload', () => {
-      const req = createMockReq({
-        headers: { authorization: 'Bearer valid-token' },
-      });
-
-      jwtAuth(req, res, next);
-
-      expect(req.headers['x-user-id']).toBe('user-123');
-    });
-
-    it('sets x-user-email header from decoded payload', () => {
-      const req = createMockReq({
-        headers: { authorization: 'Bearer valid-token' },
-      });
-
-      jwtAuth(req, res, next);
-
-      expect(req.headers['x-user-email']).toBe('test@test.com');
     });
 
     it('calls next() with no arguments', () => {

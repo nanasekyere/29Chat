@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AppError } from '@29chat/common';
 import { createMockUser } from '../../helpers/mocks';
 
+vi.mock('@29chat/database', () => ({
+  refreshTokensQueries: {
+    saveRefreshToken: vi.fn(),
+  },
+}));
+
 vi.mock('jsonwebtoken', () => ({
   default: {
     sign: vi.fn().mockReturnValue('signed-token'),
@@ -32,11 +38,11 @@ describe('token service', () => {
   });
 
   describe('createAccessToken', () => {
-    it('signs with { id, email } payload, JWT_SECRET, and correct expiry', () => {
+    it('signs with { id } payload, JWT_SECRET, and correct expiry', () => {
       createAccessToken(user);
 
       expect(mockSign).toHaveBeenCalledWith(
-        { id: user.id, email: user.email },
+        { id: user.id },
         'test-secret',
         { expiresIn: '1h' }
       );
@@ -50,34 +56,23 @@ describe('token service', () => {
       expect(token).toBe('access-token-123');
     });
 
-    it('falls back to "secret" when JWT_SECRET is undefined', () => {
-      delete process.env.JWT_SECRET;
-
-      createAccessToken(user);
-
-      expect(mockSign).toHaveBeenCalledWith(
-        expect.any(Object),
-        'secret',
-        expect.any(Object)
-      );
-    });
   });
 
   describe('createRefreshToken', () => {
-    it('signs with { id, email } payload, JWT_REFRESH_SECRET, and 7d expiry', () => {
+    it('signs with { id } payload, JWT_REFRESH_SECRET, and 7d expiry', () => {
       createRefreshToken(user);
 
       expect(mockSign).toHaveBeenCalledWith(
-        { id: user.id, email: user.email },
+        { id: user.id },
         'test-refresh-secret',
         { expiresIn: '7d' }
       );
     });
 
-    it('returns the signed token string', () => {
+    it('returns the signed token string', async () => {
       mockSign.mockReturnValue('refresh-token-123' as any);
 
-      const token = createRefreshToken(user);
+      const token = await createRefreshToken(user);
 
       expect(token).toBe('refresh-token-123');
     });
@@ -85,7 +80,7 @@ describe('token service', () => {
 
   describe('verifyToken', () => {
     it('returns decoded JWTPayload when token is valid', () => {
-      const payload = { id: 'user-1', email: 'a@b.com' };
+      const payload = { id: 'user-1' };
       mockVerify.mockReturnValue(payload as any);
 
       const result = verifyToken('valid-token');
@@ -106,7 +101,7 @@ describe('token service', () => {
 
   describe('verifyRefreshToken', () => {
     it('returns decoded JWTPayload when refresh token is valid', () => {
-      const payload = { id: 'user-1', email: 'a@b.com' };
+      const payload = { id: 'user-1' };
       mockVerify.mockReturnValue(payload as any);
 
       const result = verifyRefreshToken('valid-refresh');

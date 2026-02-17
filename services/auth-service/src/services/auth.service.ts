@@ -41,7 +41,7 @@ export async function register({
   }
 
   const token = createAccessToken(user);
-  const refreshToken = createRefreshToken(user);
+  const refreshToken = await createRefreshToken(user);
   const { password: _, ...sanitizedUser } = user;
 
   return { user: sanitizedUser, token, refreshToken };

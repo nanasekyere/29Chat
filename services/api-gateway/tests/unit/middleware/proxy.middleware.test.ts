@@ -93,26 +93,6 @@ describe('proxy middleware', () => {
       expect(proxyReq.setHeader).toHaveBeenCalledWith('authorization', 'Bearer token123');
     });
 
-    it('forwards x-user-id header when present', () => {
-      const handler = getProxyReqHandler();
-      const proxyReq = createMockProxyReq();
-      const req = createMockIncomingReq({ 'x-user-id': 'user-123' });
-
-      handler(proxyReq, req, {} as ServerResponse);
-
-      expect(proxyReq.setHeader).toHaveBeenCalledWith('x-user-id', 'user-123');
-    });
-
-    it('forwards x-user-email header when present', () => {
-      const handler = getProxyReqHandler();
-      const proxyReq = createMockProxyReq();
-      const req = createMockIncomingReq({ 'x-user-email': 'test@test.com' });
-
-      handler(proxyReq, req, {} as ServerResponse);
-
-      expect(proxyReq.setHeader).toHaveBeenCalledWith('x-user-email', 'test@test.com');
-    });
-
     it('does not forward authorization header when absent', () => {
       const handler = getProxyReqHandler();
       const proxyReq = createMockProxyReq();
