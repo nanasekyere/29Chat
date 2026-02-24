@@ -7,4 +7,4 @@ export { usersQueries, refreshTokensQueries };
 
 // Messages DB
 export { default as messagesDb } from './messages-db';
-export * from './messages-db/queries';
+export * as messagesQueries from './messages-db/queries';
