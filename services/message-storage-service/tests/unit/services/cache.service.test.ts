@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockMessage, createMockMessages } from '../../helpers/mocks';
 
-const mockRedisClient = {
+const mockRedisClient = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
   del: vi.fn(),
-};
+}));
 
 vi.mock('../../../src/config/redis', () => ({
-  default: mockRedisClient,
+  redis: mockRedisClient,
 }));
 
 import {
@@ -33,7 +33,7 @@ describe('cache service', () => {
       const result = await getMessageCache('msg-uuid-1');
 
       expect(mockRedisClient.get).toHaveBeenCalledWith('message:msg-uuid-1');
-      expect(result).toEqual(msg);
+      expect(result).toEqual(JSON.parse(JSON.stringify(msg)));
     });
 
     it('returns null on cache miss', async () => {
@@ -69,7 +69,7 @@ describe('cache service', () => {
       const result = await getRoomMessagesCache('room-uuid-1', 50, 0);
 
       expect(mockRedisClient.get).toHaveBeenCalledWith('room:room-uuid-1:messages:50:0');
-      expect(result).toEqual(messages);
+      expect(result).toEqual(JSON.parse(JSON.stringify(messages)));
     });
 
     it('returns null on cache miss', async () => {
