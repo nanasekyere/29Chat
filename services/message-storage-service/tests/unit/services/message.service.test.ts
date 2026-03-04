@@ -94,13 +94,12 @@ describe('message service', () => {
       expect(result).toEqual(msg);
     });
 
-    it('returns null if not found in cache or DB', async () => {
+    it('throws AppError 404 if not found in cache or DB', async () => {
       mockCacheGet.mockResolvedValue(null);
       mockDbGetById.mockResolvedValue(null);
 
-      const result = await getMessageById('nonexistent');
-
-      expect(result).toBeNull();
+      await expect(getMessageById('nonexistent')).rejects.toThrow(AppError);
+      await expect(getMessageById('nonexistent')).rejects.toThrow('Message not found');
       expect(mockCacheSet).not.toHaveBeenCalled();
     });
   });
@@ -142,6 +141,7 @@ describe('message service', () => {
 
   describe('updateMessage', () => {
     it('updates message content, sets editedAt, invalidates caches', async () => {
+      mockCacheGet.mockResolvedValue(null);
       const existing = createMockMessage();
       mockDbGetById.mockResolvedValue(existing);
       const updated = createMockMessage({ content: 'Updated', editedAt: new Date() });
@@ -162,6 +162,7 @@ describe('message service', () => {
     });
 
     it('throws AppError 404 if message not found', async () => {
+      mockCacheGet.mockResolvedValue(null);
       mockDbGetById.mockResolvedValue(null);
 
       await expect(updateMessage('nonexistent', 'user-uuid-1', 'Updated')).rejects.toThrow(AppError);
@@ -169,6 +170,7 @@ describe('message service', () => {
     });
 
     it('throws AppError 403 if senderId does not match', async () => {
+      mockCacheGet.mockResolvedValue(null);
       const existing = createMockMessage({ senderId: 'other-user' });
       mockDbGetById.mockResolvedValue(existing);
 
@@ -177,6 +179,7 @@ describe('message service', () => {
     });
 
     it('throws AppError 400 if content is empty', async () => {
+      mockCacheGet.mockResolvedValue(null);
       const existing = createMockMessage();
       mockDbGetById.mockResolvedValue(existing);
 
@@ -187,6 +190,7 @@ describe('message service', () => {
 
   describe('softDeleteMessage', () => {
     it('calls messagesQueries.softDeleteMessage and invalidates caches', async () => {
+      mockCacheGet.mockResolvedValue(null);
       const existing = createMockMessage();
       mockDbGetById.mockResolvedValue(existing);
       mockDbSoftDelete.mockResolvedValue(undefined);
@@ -199,6 +203,7 @@ describe('message service', () => {
     });
 
     it('throws AppError 404 if message not found', async () => {
+      mockCacheGet.mockResolvedValue(null);
       mockDbGetById.mockResolvedValue(null);
 
       await expect(softDeleteMessage('nonexistent', 'user-uuid-1')).rejects.toThrow(AppError);
@@ -206,6 +211,7 @@ describe('message service', () => {
     });
 
     it('throws AppError 403 if senderId does not match', async () => {
+      mockCacheGet.mockResolvedValue(null);
       const existing = createMockMessage({ senderId: 'other-user' });
       mockDbGetById.mockResolvedValue(existing);
 

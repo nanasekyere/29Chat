@@ -5,6 +5,7 @@ const mockRedisClient = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
   del: vi.fn(),
+  keys: vi.fn(),
 }));
 
 vi.mock('../../../src/config/redis', () => ({
@@ -108,12 +109,15 @@ describe('cache service', () => {
   });
 
   describe('invalidateRoomMessagesCache', () => {
-    it('calls del with correct key pattern', async () => {
-      mockRedisClient.del.mockResolvedValue(1);
+    it('finds keys by pattern and deletes them', async () => {
+      const keys = ['room:room-uuid-1:messages:50:0', 'room:room-uuid-1:messages:50:50'];
+      mockRedisClient.keys.mockResolvedValue(keys);
+      mockRedisClient.del.mockResolvedValue(2);
 
       await invalidateRoomMessagesCache('room-uuid-1');
 
-      expect(mockRedisClient.del).toHaveBeenCalledWith('room:room-uuid-1:messages:*');
+      expect(mockRedisClient.keys).toHaveBeenCalledWith('room:room-uuid-1:messages:*');
+      expect(mockRedisClient.del).toHaveBeenCalledWith(...keys);
     });
   });
 });

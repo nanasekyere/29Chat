@@ -18,12 +18,15 @@ export const getMessageById = async (id: string) => {
 
 export const getMessagesByRoomId = async (
   roomId: string,
-  options: { limit: number; offset: number } = { limit: 50, offset: 0 },
+  limit: number = 50,
+  offset: number = 0,
 ) => {
   const messages = await db
     .select()
     .from(messagesTable)
-    .where(eq(messagesTable.roomId, roomId));
+    .where(eq(messagesTable.roomId, roomId))
+    .limit(limit)
+    .offset(offset);
   return messages as Message[];
 };
 
