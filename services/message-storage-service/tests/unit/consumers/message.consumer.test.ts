@@ -1,17 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { AppError } from '@29chat/common';
 
-const mockChannel = {
-  assertQueue: vi.fn(),
-  consume: vi.fn(),
-  ack: vi.fn(),
-  nack: vi.fn(),
-  close: vi.fn(),
-};
+const { mockChannel, mockConnection } = vi.hoisted(() => {
+  const mockChannel = {
+    assertQueue: vi.fn(),
+    consume: vi.fn(),
+    ack: vi.fn(),
+    nack: vi.fn(),
+    close: vi.fn(),
+    prefetch: vi.fn(),
+  };
 
-const mockConnection = {
-  createChannel: vi.fn().mockResolvedValue(mockChannel),
-  close: vi.fn(),
-};
+  const mockConnection = {
+    createChannel: vi.fn().mockResolvedValue(mockChannel),
+    close: vi.fn(),
+  };
+
+  return { mockChannel, mockConnection };
+});
 
 vi.mock('amqplib', () => ({
   default: {
@@ -95,7 +101,7 @@ describe('message consumer', () => {
       const handler = await getHandleMessage();
       const messageData = { roomId: 'room-1', senderId: 'user-1', content: 'Hello', contentType: 'text' };
       const msg = { content: Buffer.from(JSON.stringify(messageData)) };
-      mockCreateMessage.mockRejectedValue(new Error('Service failure'));
+      mockCreateMessage.mockRejectedValue(new AppError('Service failure'));
 
       await handler(msg);
 

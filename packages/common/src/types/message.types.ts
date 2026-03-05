@@ -1,9 +1,10 @@
+export type MessageContentType = 'text' | 'image' | 'audio' | 'video' | 'file';
 export interface Message {
   id: string;
   roomId: string;
   senderId: string;
   content: string;
-  contentType: 'text' | 'image' | 'audio' | 'video' | 'file';
+  contentType: MessageContentType;
   createdAt: Date;
   editedAt: Date | null;
   deletedAt: Date | null;
