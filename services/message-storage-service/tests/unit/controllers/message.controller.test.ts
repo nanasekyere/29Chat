@@ -96,7 +96,7 @@ describe('message controller', () => {
     });
 
     it('calls next with AppError 404 when message not found', async () => {
-      mockGetById.mockResolvedValue(null);
+      mockGetById.mockRejectedValue(new AppError('Message not found', 404));
       const req = createMockReq({ params: { messageId: 'nonexistent' } });
       const res = createMockRes();
 

@@ -13,10 +13,7 @@ export async function createMessage(msg: NewMessage): Promise<Message> {
     return message;
 
   } catch (error) {
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to create message", 500);
+    
   }
 }
 
