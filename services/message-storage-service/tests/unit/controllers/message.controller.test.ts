@@ -22,7 +22,7 @@ function createMockReq(overrides: any = {}) {
     params: {},
     query: {},
     body: {},
-    user: { id: 'user-uuid-1' },
+    user: { id: '00000000-0000-4000-a000-000000000001' },
     ...overrides,
   } as any;
 }
@@ -46,12 +46,12 @@ describe('message controller', () => {
     it('returns 200 with messages from req.params.roomId', async () => {
       const messages = createMockMessages(3);
       mockGetByRoom.mockResolvedValue(messages);
-      const req = createMockReq({ params: { roomId: 'room-uuid-1' }, query: {} });
+      const req = createMockReq({ params: { roomId: '00000000-0000-4000-a000-000000000010' }, query: {} });
       const res = createMockRes();
 
       await getMessages(req, res, next);
 
-      expect(mockGetByRoom).toHaveBeenCalledWith('room-uuid-1', 50, 0);
+      expect(mockGetByRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010', 50, 0);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ messages });
     });
@@ -59,20 +59,20 @@ describe('message controller', () => {
     it('passes limit and offset from query params', async () => {
       mockGetByRoom.mockResolvedValue([]);
       const req = createMockReq({
-        params: { roomId: 'room-uuid-1' },
+        params: { roomId: '00000000-0000-4000-a000-000000000010' },
         query: { limit: '20', offset: '10' },
       });
       const res = createMockRes();
 
       await getMessages(req, res, next);
 
-      expect(mockGetByRoom).toHaveBeenCalledWith('room-uuid-1', 20, 10);
+      expect(mockGetByRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010', 20, 10);
     });
 
     it('calls next with error on service failure', async () => {
       const error = new Error('Service error');
       mockGetByRoom.mockRejectedValue(error);
-      const req = createMockReq({ params: { roomId: 'room-uuid-1' } });
+      const req = createMockReq({ params: { roomId: '00000000-0000-4000-a000-000000000010' } });
       const res = createMockRes();
 
       await getMessages(req, res, next);
@@ -85,12 +85,12 @@ describe('message controller', () => {
     it('returns 200 with message from req.params.messageId', async () => {
       const msg = createMockMessage();
       mockGetById.mockResolvedValue(msg);
-      const req = createMockReq({ params: { messageId: 'msg-uuid-1' } });
+      const req = createMockReq({ params: { messageId: '00000000-0000-4000-a000-000000000100' } });
       const res = createMockRes();
 
       await getMessage(req, res, next);
 
-      expect(mockGetById).toHaveBeenCalledWith('msg-uuid-1');
+      expect(mockGetById).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100');
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ message: msg });
     });
@@ -111,7 +111,7 @@ describe('message controller', () => {
     it('calls next with error on service failure', async () => {
       const error = new Error('Service error');
       mockGetById.mockRejectedValue(error);
-      const req = createMockReq({ params: { messageId: 'msg-uuid-1' } });
+      const req = createMockReq({ params: { messageId: '00000000-0000-4000-a000-000000000100' } });
       const res = createMockRes();
 
       await getMessage(req, res, next);
@@ -125,15 +125,15 @@ describe('message controller', () => {
       const updated = createMockMessage({ content: 'Updated' });
       mockUpdate.mockResolvedValue(updated);
       const req = createMockReq({
-        params: { messageId: 'msg-uuid-1' },
+        params: { messageId: '00000000-0000-4000-a000-000000000100' },
         body: { content: 'Updated' },
-        user: { id: 'user-uuid-1' },
+        user: { id: '00000000-0000-4000-a000-000000000001' },
       });
       const res = createMockRes();
 
       await updateMessage(req, res, next);
 
-      expect(mockUpdate).toHaveBeenCalledWith('msg-uuid-1', 'user-uuid-1', 'Updated');
+      expect(mockUpdate).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001', 'Updated');
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ message: updated });
     });
@@ -142,9 +142,9 @@ describe('message controller', () => {
       const error = new AppError('Not authorized', 403);
       mockUpdate.mockRejectedValue(error);
       const req = createMockReq({
-        params: { messageId: 'msg-uuid-1' },
+        params: { messageId: '00000000-0000-4000-a000-000000000100' },
         body: { content: 'Updated' },
-        user: { id: 'user-uuid-1' },
+        user: { id: '00000000-0000-4000-a000-000000000001' },
       });
       const res = createMockRes();
 
@@ -158,14 +158,14 @@ describe('message controller', () => {
     it('returns 204 on successful delete', async () => {
       mockDelete.mockResolvedValue(undefined);
       const req = createMockReq({
-        params: { messageId: 'msg-uuid-1' },
-        user: { id: 'user-uuid-1' },
+        params: { messageId: '00000000-0000-4000-a000-000000000100' },
+        user: { id: '00000000-0000-4000-a000-000000000001' },
       });
       const res = createMockRes();
 
       await deleteMessage(req, res, next);
 
-      expect(mockDelete).toHaveBeenCalledWith('msg-uuid-1', 'user-uuid-1');
+      expect(mockDelete).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001');
       expect(res.status).toHaveBeenCalledWith(204);
       expect(res.send).toHaveBeenCalled();
     });
@@ -174,8 +174,8 @@ describe('message controller', () => {
       const error = new AppError('Not authorized', 403);
       mockDelete.mockRejectedValue(error);
       const req = createMockReq({
-        params: { messageId: 'msg-uuid-1' },
-        user: { id: 'user-uuid-1' },
+        params: { messageId: '00000000-0000-4000-a000-000000000100' },
+        user: { id: '00000000-0000-4000-a000-000000000001' },
       });
       const res = createMockRes();
 

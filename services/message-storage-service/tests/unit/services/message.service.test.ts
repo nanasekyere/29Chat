@@ -75,9 +75,9 @@ describe('message service', () => {
       const msg = createMockMessage();
       mockCacheGet.mockResolvedValue(msg);
 
-      const result = await getMessageById('msg-uuid-1');
+      const result = await getMessageById('00000000-0000-4000-a000-000000000100');
 
-      expect(mockCacheGet).toHaveBeenCalledWith('msg-uuid-1');
+      expect(mockCacheGet).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100');
       expect(mockDbGetById).not.toHaveBeenCalled();
       expect(result).toEqual(msg);
     });
@@ -87,9 +87,9 @@ describe('message service', () => {
       mockCacheGet.mockResolvedValue(null);
       mockDbGetById.mockResolvedValue(msg);
 
-      const result = await getMessageById('msg-uuid-1');
+      const result = await getMessageById('00000000-0000-4000-a000-000000000100');
 
-      expect(mockDbGetById).toHaveBeenCalledWith('msg-uuid-1');
+      expect(mockDbGetById).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100');
       expect(mockCacheSet).toHaveBeenCalledWith(msg);
       expect(result).toEqual(msg);
     });
@@ -109,9 +109,9 @@ describe('message service', () => {
       const messages = createMockMessages(3);
       mockCacheGetRoom.mockResolvedValue(messages);
 
-      const result = await getMessagesByRoomId('room-uuid-1', 50, 0);
+      const result = await getMessagesByRoomId('00000000-0000-4000-a000-000000000010', 50, 0);
 
-      expect(mockCacheGetRoom).toHaveBeenCalledWith('room-uuid-1', 50, 0);
+      expect(mockCacheGetRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010', 50, 0);
       expect(mockDbGetByRoom).not.toHaveBeenCalled();
       expect(result).toEqual(messages);
     });
@@ -121,10 +121,10 @@ describe('message service', () => {
       mockCacheGetRoom.mockResolvedValue(null);
       mockDbGetByRoom.mockResolvedValue(messages);
 
-      const result = await getMessagesByRoomId('room-uuid-1', 50, 0);
+      const result = await getMessagesByRoomId('00000000-0000-4000-a000-000000000010', 50, 0);
 
-      expect(mockDbGetByRoom).toHaveBeenCalledWith('room-uuid-1', 50, 0);
-      expect(mockCacheSetRoom).toHaveBeenCalledWith('room-uuid-1', 50, 0, messages);
+      expect(mockDbGetByRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010', 50, 0);
+      expect(mockCacheSetRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010', 50, 0, messages);
       expect(result).toEqual(messages);
     });
 
@@ -132,10 +132,10 @@ describe('message service', () => {
       mockCacheGetRoom.mockResolvedValue(null);
       mockDbGetByRoom.mockResolvedValue([]);
 
-      await getMessagesByRoomId('room-uuid-1');
+      await getMessagesByRoomId('00000000-0000-4000-a000-000000000010');
 
-      expect(mockCacheGetRoom).toHaveBeenCalledWith('room-uuid-1', 50, 0);
-      expect(mockDbGetByRoom).toHaveBeenCalledWith('room-uuid-1', 50, 0);
+      expect(mockCacheGetRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010', 50, 0);
+      expect(mockDbGetByRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010', 50, 0);
     });
   });
 
@@ -147,17 +147,17 @@ describe('message service', () => {
       const updated = createMockMessage({ content: 'Updated', editedAt: new Date() });
       mockDbUpdate.mockResolvedValue(updated);
 
-      const result = await updateMessage('msg-uuid-1', 'user-uuid-1', 'Updated');
+      const result = await updateMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001', 'Updated');
 
-      expect(mockDbGetById).toHaveBeenCalledWith('msg-uuid-1');
+      expect(mockDbGetById).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100');
       expect(mockDbUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           content: 'Updated',
           editedAt: expect.any(Date),
         })
       );
-      expect(mockCacheInvalidateMsg).toHaveBeenCalledWith('msg-uuid-1');
-      expect(mockCacheInvalidateRoom).toHaveBeenCalledWith('room-uuid-1');
+      expect(mockCacheInvalidateMsg).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100');
+      expect(mockCacheInvalidateRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010');
       expect(result).toEqual(updated);
     });
 
@@ -165,8 +165,8 @@ describe('message service', () => {
       mockCacheGet.mockResolvedValue(null);
       mockDbGetById.mockResolvedValue(null);
 
-      await expect(updateMessage('nonexistent', 'user-uuid-1', 'Updated')).rejects.toThrow(AppError);
-      await expect(updateMessage('nonexistent', 'user-uuid-1', 'Updated')).rejects.toThrow('Message not found');
+      await expect(updateMessage('nonexistent', '00000000-0000-4000-a000-000000000001', 'Updated')).rejects.toThrow(AppError);
+      await expect(updateMessage('nonexistent', '00000000-0000-4000-a000-000000000001', 'Updated')).rejects.toThrow('Message not found');
     });
 
     it('throws AppError 403 if senderId does not match', async () => {
@@ -174,8 +174,8 @@ describe('message service', () => {
       const existing = createMockMessage({ senderId: 'other-user' });
       mockDbGetById.mockResolvedValue(existing);
 
-      await expect(updateMessage('msg-uuid-1', 'user-uuid-1', 'Updated')).rejects.toThrow(AppError);
-      await expect(updateMessage('msg-uuid-1', 'user-uuid-1', 'Updated')).rejects.toThrow('Not authorized');
+      await expect(updateMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001', 'Updated')).rejects.toThrow(AppError);
+      await expect(updateMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001', 'Updated')).rejects.toThrow('Not authorized');
     });
 
     it('throws AppError 400 if content is empty', async () => {
@@ -183,8 +183,8 @@ describe('message service', () => {
       const existing = createMockMessage();
       mockDbGetById.mockResolvedValue(existing);
 
-      await expect(updateMessage('msg-uuid-1', 'user-uuid-1', '')).rejects.toThrow(AppError);
-      await expect(updateMessage('msg-uuid-1', 'user-uuid-1', '')).rejects.toThrow('Message content cannot be empty');
+      await expect(updateMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001', '')).rejects.toThrow(AppError);
+      await expect(updateMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001', '')).rejects.toThrow('Message content cannot be empty');
     });
   });
 
@@ -195,19 +195,19 @@ describe('message service', () => {
       mockDbGetById.mockResolvedValue(existing);
       mockDbSoftDelete.mockResolvedValue(undefined);
 
-      await softDeleteMessage('msg-uuid-1', 'user-uuid-1');
+      await softDeleteMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001');
 
-      expect(mockDbSoftDelete).toHaveBeenCalledWith('msg-uuid-1');
-      expect(mockCacheInvalidateMsg).toHaveBeenCalledWith('msg-uuid-1');
-      expect(mockCacheInvalidateRoom).toHaveBeenCalledWith('room-uuid-1');
+      expect(mockDbSoftDelete).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100');
+      expect(mockCacheInvalidateMsg).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000100');
+      expect(mockCacheInvalidateRoom).toHaveBeenCalledWith('00000000-0000-4000-a000-000000000010');
     });
 
     it('throws AppError 404 if message not found', async () => {
       mockCacheGet.mockResolvedValue(null);
       mockDbGetById.mockResolvedValue(null);
 
-      await expect(softDeleteMessage('nonexistent', 'user-uuid-1')).rejects.toThrow(AppError);
-      await expect(softDeleteMessage('nonexistent', 'user-uuid-1')).rejects.toThrow('Message not found');
+      await expect(softDeleteMessage('nonexistent', '00000000-0000-4000-a000-000000000001')).rejects.toThrow(AppError);
+      await expect(softDeleteMessage('nonexistent', '00000000-0000-4000-a000-000000000001')).rejects.toThrow('Message not found');
     });
 
     it('throws AppError 403 if senderId does not match', async () => {
@@ -215,8 +215,8 @@ describe('message service', () => {
       const existing = createMockMessage({ senderId: 'other-user' });
       mockDbGetById.mockResolvedValue(existing);
 
-      await expect(softDeleteMessage('msg-uuid-1', 'user-uuid-1')).rejects.toThrow(AppError);
-      await expect(softDeleteMessage('msg-uuid-1', 'user-uuid-1')).rejects.toThrow('Not authorized');
+      await expect(softDeleteMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001')).rejects.toThrow(AppError);
+      await expect(softDeleteMessage('00000000-0000-4000-a000-000000000100', '00000000-0000-4000-a000-000000000001')).rejects.toThrow('Not authorized');
     });
   });
 });

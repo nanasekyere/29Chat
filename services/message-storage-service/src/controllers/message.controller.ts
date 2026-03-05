@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import * as msgService from "../services/message.service";
-import { ne } from "drizzle-orm";
 
 export async function getMessages(
   req: Request,

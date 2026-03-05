@@ -7,12 +7,15 @@ import { errorMiddleware } from './middleware/error.middleware';
 
 const app = express();
 
-const port = process.env.MESSAGE_STORAGE_SERVICE_PORT || 3003;
-
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.use('/', messageRoutes);
 app.use(errorMiddleware);
 
