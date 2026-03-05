@@ -14,18 +14,31 @@ vi.mock('@29chat/database', () => ({
 }));
 
 // Mock Redis client
-const mockRedisClient = {
+const mockRedisClient = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
   del: vi.fn(),
-};
+  keys: vi.fn(),
+}));
 
 vi.mock('../../src/config/redis', () => ({
-  default: mockRedisClient,
+  redis: mockRedisClient,
 }));
 
 import { messagesQueries } from '@29chat/database';
-import app from '../../src/app';
+import express from 'express';
+import messageRoutes from '../../src/routes/message.routes';
+import { errorMiddleware } from '../../src/middleware/error.middleware';
+
+// Test app that simulates gateway setting req.user
+const app = express();
+app.use(express.json());
+app.use((req, _res, next) => {
+  req.user = { id: 'user-uuid-1' } as Express.User;
+  next();
+});
+app.use('/', messageRoutes);
+app.use(errorMiddleware);
 
 const mockGetById = vi.mocked(messagesQueries.getMessageById);
 const mockGetByRoom = vi.mocked(messagesQueries.getMessagesByRoomId);
@@ -38,14 +51,15 @@ describe('message routes', () => {
     mockRedisClient.get.mockResolvedValue(null);
     mockRedisClient.set.mockResolvedValue('OK');
     mockRedisClient.del.mockResolvedValue(1);
+    mockRedisClient.keys.mockResolvedValue([]);
   });
 
-  describe('GET /messages/:roomId', () => {
+  describe('GET /:roomId', () => {
     it('200 - returns messages for a room', async () => {
       const messages = createMockMessages(3);
       mockGetByRoom.mockResolvedValue(messages);
 
-      const res = await request(app).get('/messages/room-uuid-1');
+      const res = await request(app).get('/room-uuid-1');
 
       expect(res.status).toBe(200);
       expect(res.body.messages).toHaveLength(3);
@@ -54,28 +68,28 @@ describe('message routes', () => {
     it('200 - accepts pagination query params', async () => {
       mockGetByRoom.mockResolvedValue([]);
 
-      const res = await request(app).get('/messages/room-uuid-1?limit=10&offset=5');
+      const res = await request(app).get('/room-uuid-1?limit=10&offset=5');
 
       expect(res.status).toBe(200);
-      expect(mockGetByRoom).toHaveBeenCalledWith('room-uuid-1', { limit: 10, offset: 5 });
+      expect(mockGetByRoom).toHaveBeenCalledWith('room-uuid-1', 10, 5 );
     });
 
     it('200 - returns empty array when no messages', async () => {
       mockGetByRoom.mockResolvedValue([]);
 
-      const res = await request(app).get('/messages/room-uuid-1');
+      const res = await request(app).get('/room-uuid-1');
 
       expect(res.status).toBe(200);
       expect(res.body.messages).toEqual([]);
     });
   });
 
-  describe('GET /messages/:roomId/:messageId', () => {
+  describe('GET /:roomId/:messageId', () => {
     it('200 - returns a single message', async () => {
       const msg = createMockMessage();
       mockGetById.mockResolvedValue(msg);
 
-      const res = await request(app).get('/messages/room-uuid-1/msg-uuid-1');
+      const res = await request(app).get('/room-uuid-1/msg-uuid-1');
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBeDefined();
@@ -85,14 +99,14 @@ describe('message routes', () => {
     it('404 - message not found', async () => {
       mockGetById.mockResolvedValue(null);
 
-      const res = await request(app).get('/messages/room-uuid-1/nonexistent');
+      const res = await request(app).get('/room-uuid-1/nonexistent');
 
       expect(res.status).toBe(404);
       expect(res.body.message).toBe('Message not found');
     });
   });
 
-  describe('PUT /messages/:messageId', () => {
+  describe('PUT /:messageId', () => {
     it('200 - updates message content', async () => {
       const existing = createMockMessage();
       const updated = createMockMessage({ content: 'Updated content', editedAt: new Date() });
@@ -100,8 +114,8 @@ describe('message routes', () => {
       mockUpdate.mockResolvedValue(updated);
 
       const res = await request(app)
-        .put('/messages/msg-uuid-1')
-        .set('x-user-id', 'user-uuid-1')
+        .put('/msg-uuid-1')
+
         .send({ content: 'Updated content' });
 
       expect(res.status).toBe(200);
@@ -113,8 +127,8 @@ describe('message routes', () => {
       mockGetById.mockResolvedValue(existing);
 
       const res = await request(app)
-        .put('/messages/msg-uuid-1')
-        .set('x-user-id', 'user-uuid-1')
+        .put('/msg-uuid-1')
+
         .send({ content: '' });
 
       expect(res.status).toBe(400);
@@ -125,8 +139,8 @@ describe('message routes', () => {
       mockGetById.mockResolvedValue(existing);
 
       const res = await request(app)
-        .put('/messages/msg-uuid-1')
-        .set('x-user-id', 'user-uuid-1')
+        .put('/msg-uuid-1')
+
         .send({ content: 'Updated' });
 
       expect(res.status).toBe(403);
@@ -136,22 +150,22 @@ describe('message routes', () => {
       mockGetById.mockResolvedValue(null);
 
       const res = await request(app)
-        .put('/messages/nonexistent')
-        .set('x-user-id', 'user-uuid-1')
+        .put('/nonexistent')
+
         .send({ content: 'Updated' });
 
       expect(res.status).toBe(404);
     });
   });
 
-  describe('DELETE /messages/:messageId', () => {
+  describe('DELETE /:messageId', () => {
     it('204 - deletes message successfully', async () => {
       const existing = createMockMessage();
       mockGetById.mockResolvedValue(existing);
       mockSoftDelete.mockResolvedValue(undefined);
 
       const res = await request(app)
-        .delete('/messages/msg-uuid-1')
+        .delete('/msg-uuid-1')
         .set('x-user-id', 'user-uuid-1');
 
       expect(res.status).toBe(204);
@@ -162,7 +176,7 @@ describe('message routes', () => {
       mockGetById.mockResolvedValue(existing);
 
       const res = await request(app)
-        .delete('/messages/msg-uuid-1')
+        .delete('/msg-uuid-1')
         .set('x-user-id', 'user-uuid-1');
 
       expect(res.status).toBe(403);
@@ -172,7 +186,7 @@ describe('message routes', () => {
       mockGetById.mockResolvedValue(null);
 
       const res = await request(app)
-        .delete('/messages/nonexistent')
+        .delete('/nonexistent')
         .set('x-user-id', 'user-uuid-1');
 
       expect(res.status).toBe(404);
