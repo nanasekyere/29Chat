@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, timestamp, pgEnum, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const roomTypes = pgEnum("room_types", ["group", "direct"]);
@@ -7,7 +7,7 @@ export const messageContentTypes = pgEnum("message_content_types", ["text", "ima
 
 export const roomsTable = pgTable("rooms", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }),
   type: roomTypes("type").notNull().default("direct"),
   createdBy: uuid("created_by").notNull(),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
@@ -20,13 +20,15 @@ export const roomMembersTable = pgTable("room_members", {
   userId: uuid("user_id").notNull(),
   role: roomMemberRoles("role").notNull().default("member"),
   joinedAt: timestamp("joined_at").notNull().default(sql`now()`),
-});
+}, (table) => [
+  unique("room_members_room_id_user_id_unique").on(table.roomId, table.userId),
+]);
 
 export const messagesTable = pgTable("messages", {
   id: uuid("id").primaryKey().defaultRandom(),
   roomId: uuid("room_id").notNull().references(() => roomsTable.id),
   senderId: uuid("sender_id").notNull(),
-  content: varchar("content", { length: 255 }).notNull(),
+  content: text("content").notNull(),
   contentType: messageContentTypes("content_type").notNull().default("text"),
   createdAt: timestamp("created_at").notNull().default(sql`now()`),
   editedAt: timestamp("edited_at"),
