@@ -6,7 +6,7 @@ import { JWTPayload, AppError } from '@29chat/common';
 const excludedPaths = ['auth/register', 'auth/login'];
 
 export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
-  const isPublic = excludedPaths.some((path) => req.path === '/api/' + path);
+  const isPublic = req.path.endsWith('/health') || excludedPaths.some((path) => req.path === '/api/' + path);
   if (isPublic) {
     return next();
   }
