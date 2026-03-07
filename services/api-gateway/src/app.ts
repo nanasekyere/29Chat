@@ -1,11 +1,11 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import expressWinston from 'express-winston';
-import logger from './utils/logger';
+import { createLogger, createErrorMiddleware } from '@29chat/common';
 import { jwtAuth } from './middleware/auth.middleware';
 import proxyMiddleware from './middleware/proxy.middleware';
-import { errorMiddleware } from './middleware/error.middleware';
+
+const logger = createLogger('api-gateway');
 
 const app = express();
 
@@ -14,12 +14,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(expressWinston.logger({
-  winstonInstance: logger,
-  meta: true,
-  msg: 'HTTP {{req.method}} {{req.url}} {{res.statusCode}} {{res.responseTime}}ms',
-  colorize: false,
-}));
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    logger.info(`${req.method} ${req.originalUrl} ${res.statusCode} ${Date.now() - start}ms`);
+  });
+  next();
+});
 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ message: 'OK' });
@@ -29,10 +30,6 @@ app.use(jwtAuth);
 
 app.use("/api", proxyMiddleware);
 
-app.use(expressWinston.errorLogger({
-  winstonInstance: logger,
-}));
-
-app.use(errorMiddleware);
+app.use(createErrorMiddleware('api-gateway'));
 
 export default app;

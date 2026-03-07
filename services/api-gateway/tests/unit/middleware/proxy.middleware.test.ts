@@ -16,15 +16,13 @@ vi.mock('http-proxy-middleware', () => ({
   fixRequestBody: vi.fn(),
 }));
 
-vi.mock('../../../src/utils/logger', () => ({
-  default: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
+const { mockLogger } = vi.hoisted(() => ({
+  mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-
-import logger from '../../../src/utils/logger';
+vi.mock('@29chat/common', async () => {
+  const actual = await vi.importActual<typeof import('@29chat/common')>('@29chat/common');
+  return { ...actual, createLogger: () => mockLogger };
+});
 
 import '../../../src/middleware/proxy.middleware';
 
@@ -180,7 +178,7 @@ describe('proxy middleware', () => {
         res as unknown as ServerResponse,
       );
 
-      expect(logger.error).toHaveBeenCalledWith('Proxy error', {
+      expect(mockLogger.error).toHaveBeenCalledWith('Proxy error', {
         error: 'ECONNREFUSED',
         target: expect.any(String),
       });

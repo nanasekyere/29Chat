@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AppError } from '@29chat/common';
-import { errorMiddleware } from '../../../src/middleware/error.middleware';
+import { AppError, createErrorMiddleware } from '@29chat/common';
+
+vi.mock('@29chat/common', async () => {
+  const actual = await vi.importActual<typeof import('@29chat/common')>('@29chat/common');
+  return { ...actual, createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }) };
+});
+
+const errorMiddleware = createErrorMiddleware('message-storage-service');
 
 function createMockRes() {
   const res: any = {};

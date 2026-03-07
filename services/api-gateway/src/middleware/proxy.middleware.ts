@@ -1,7 +1,9 @@
 import { createProxyMiddleware, Options, fixRequestBody } from 'http-proxy-middleware';
 import { Router, RequestHandler } from 'express';
 import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
-import logger from '../utils/logger';
+import { createLogger } from '@29chat/common';
+
+const logger = createLogger('api-gateway');
 
 const router = Router();
 
@@ -41,6 +43,10 @@ const createProxy = ({ target, pathRewrite }: { target: string, pathRewrite: Rec
       },
       proxyReq: (proxyReq: ClientRequest, req: IncomingMessage, res: ServerResponse) => {
         req.headers.authorization && proxyReq.setHeader('authorization', req.headers.authorization);
+        const user = (req as IncomingMessage & { user?: { id: string } }).user;
+        if (user?.id) {
+          proxyReq.setHeader('x-user-id', user.id);
+        }
         const correlationId = req.headers['x-correlation-id'] || crypto.randomUUID();
         proxyReq.setHeader('x-correlation-id', correlationId);
         proxyReq.setHeader('x-forwarded-by', 'api-gateway');

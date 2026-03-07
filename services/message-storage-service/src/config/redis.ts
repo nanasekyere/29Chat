@@ -1,5 +1,7 @@
 import { Redis } from "ioredis";
-import { logger } from "./logger";
+import { createLogger } from "@29chat/common";
+
+const logger = createLogger('message-storage-service');
 
 export const redis = new Redis(process.env.REDIS_URL!);
 

@@ -11,23 +11,20 @@ vi.mock('../../src/middleware/proxy.middleware', () => {
 });
 
 // Mock logger
-vi.mock('../../src/utils/logger', () => ({
-  default: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    log: vi.fn(),
-    write: vi.fn(),
-  },
-}));
+vi.mock('@29chat/common', async () => {
+  const actual = await vi.importActual<typeof import('@29chat/common')>('@29chat/common');
+  return {
+    ...actual,
+    createLogger: () => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      log: vi.fn(),
+      write: vi.fn(),
+    }),
+  };
+});
 
-// Mock express-winston
-vi.mock('express-winston', () => ({
-  default: {
-    logger: () => (_req: any, _res: any, next: any) => next(),
-    errorLogger: () => (_req: any, _res: any, next: any) => next(),
-  },
-}));
 
 import app from '../../src/app';
 

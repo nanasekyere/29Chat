@@ -1,8 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { AppError } from '@29chat/common';
-import { errorMiddleware } from '../../../src/middleware/error.middleware';
+import { AppError, createErrorMiddleware } from '@29chat/common';
+
+const { mockLogger } = vi.hoisted(() => ({
+  mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+vi.mock('@29chat/common', async () => {
+  const actual = await vi.importActual<typeof import('@29chat/common')>('@29chat/common');
+  return { ...actual, createLogger: () => mockLogger };
+});
+
+const errorMiddleware = createErrorMiddleware('auth-service', [
+  (err, _req, res) => {
+    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+      const message = err instanceof jwt.TokenExpiredError ? 'Token expired' : 'Invalid token';
+      res.status(401).json({ message });
+      return true;
+    }
+    return false;
+  },
+]);
 
 function createMockRes(): Response {
   return {

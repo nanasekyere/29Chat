@@ -2,7 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import messageRoutes from './routes/message.routes'
-import { errorMiddleware } from './middleware/error.middleware';
+import { createErrorMiddleware } from '@29chat/common';
 
 
 const app = express();
@@ -17,6 +17,6 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/', messageRoutes);
-app.use(errorMiddleware);
+app.use(createErrorMiddleware('message-storage-service'));
 
 export default app;

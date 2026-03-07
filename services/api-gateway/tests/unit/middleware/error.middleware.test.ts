@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from '@29chat/common';
-import { errorMiddleware } from '../../../src/middleware/error.middleware';
+import { AppError, createErrorMiddleware } from '@29chat/common';
 
-vi.mock('../../../src/utils/logger', () => ({
-  default: {
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
+const { mockLogger } = vi.hoisted(() => ({
+  mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
+vi.mock('@29chat/common', async () => {
+  const actual = await vi.importActual<typeof import('@29chat/common')>('@29chat/common');
+  return { ...actual, createLogger: () => mockLogger };
+});
 
-import logger from '../../../src/utils/logger';
+const errorMiddleware = createErrorMiddleware('api-gateway');
 
 function createMockRes() {
   const res = {
@@ -51,7 +51,7 @@ describe('errorMiddleware', () => {
 
       errorMiddleware(err, req, res, next);
 
-      expect(logger.warn).toHaveBeenCalledWith('App error', {
+      expect(mockLogger.warn).toHaveBeenCalledWith('App error', {
         statusCode: 403,
         message: 'Forbidden',
       });
@@ -84,7 +84,7 @@ describe('errorMiddleware', () => {
 
       errorMiddleware(err, req, res, next);
 
-      expect(logger.error).toHaveBeenCalledWith('Unhandled error', {
+      expect(mockLogger.error).toHaveBeenCalledWith('Unhandled error', {
         error: 'something broke',
         stack: expect.any(String),
       });

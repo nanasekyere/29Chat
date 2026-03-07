@@ -28,7 +28,7 @@ vi.mock('../../src/config/redis', () => ({
 import { messagesQueries } from '@29chat/database';
 import express from 'express';
 import messageRoutes from '../../src/routes/message.routes';
-import { errorMiddleware } from '../../src/middleware/error.middleware';
+import { createErrorMiddleware } from '@29chat/common';
 
 const OTHER_USER_ID = '00000000-0000-4000-a000-000000000002';
 const NONEXISTENT_ID = '00000000-0000-4000-a000-000000000999';
@@ -41,7 +41,7 @@ app.use((req, _res, next) => {
   next();
 });
 app.use('/', messageRoutes);
-app.use(errorMiddleware);
+app.use(createErrorMiddleware('message-storage-service'));
 
 const mockGetById = vi.mocked(messagesQueries.getMessageById);
 const mockGetByRoom = vi.mocked(messagesQueries.getMessagesByRoomId);

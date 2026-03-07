@@ -1,12 +1,12 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors'
-import { errorMiddleware } from './middleware/error.middleware';
+import { createErrorMiddleware } from '@29chat/common';
 
 const app = express();
 
 app.use(helmet());
 app.use(cors());
-app.use(errorMiddleware)
+app.use(createErrorMiddleware('chat-service'))
 
 export default app;

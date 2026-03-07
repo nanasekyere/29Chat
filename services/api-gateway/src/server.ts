@@ -1,5 +1,7 @@
 import app from './app';
-import logger from './utils/logger';
+import { createLogger } from '@29chat/common';
+
+const logger = createLogger('api-gateway');
 
 const port = process.env.API_GATEWAY_PORT || 3000;
 

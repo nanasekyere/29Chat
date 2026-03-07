@@ -3,7 +3,8 @@ import helmet from 'helmet';
 import cors from 'cors';
 import passport from './passport';
 import authRoutes from './routes/auth.routes';
-import { errorMiddleware } from './middleware/error.middleware';
+import jwt from 'jsonwebtoken';
+import { createErrorMiddleware } from '@29chat/common';
 
 const app = express();
 
@@ -15,6 +16,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 app.use('/', authRoutes);
-app.use(errorMiddleware);
+app.use(createErrorMiddleware('auth-service', [
+  (err, _req, res) => {
+    if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+      const message = err instanceof jwt.TokenExpiredError ? 'Token expired' : 'Invalid token';
+      res.status(401).json({ message });
+      return true;
+    }
+    return false;
+  },
+]));
 
 export default app;

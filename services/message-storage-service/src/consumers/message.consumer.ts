@@ -1,7 +1,8 @@
 import amqplib, { Channel, ChannelModel, ConsumeMessage } from "amqplib";
 import { createMessage } from "../services/message.service";
-import { AppError, NewMessage } from "@29chat/common";
-import { logger } from "../config/logger";
+import { AppError, NewMessage, createLogger } from "@29chat/common";
+
+const logger = createLogger('message-storage-service');
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost:5672";
 const QUEUE = "messages.new";
