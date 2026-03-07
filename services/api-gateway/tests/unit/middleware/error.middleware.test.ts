@@ -2,15 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
 import { AppError, createErrorMiddleware } from '@29chat/common';
 
-const { mockLogger } = vi.hoisted(() => ({
-  mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}));
-vi.mock('@29chat/common', async () => {
-  const actual = await vi.importActual<typeof import('@29chat/common')>('@29chat/common');
-  return { ...actual, createLogger: () => mockLogger };
-});
+const mockLogger = { warn: vi.fn(), error: vi.fn() };
 
-const errorMiddleware = createErrorMiddleware('api-gateway');
+const errorMiddleware = createErrorMiddleware('api-gateway', [], mockLogger);
 
 function createMockRes() {
   const res = {
