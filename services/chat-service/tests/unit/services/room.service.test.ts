@@ -4,13 +4,13 @@ import { MOCK_USER_ID, MOCK_USER_ID_2, MOCK_ROOM_ID } from '../../helpers/mocks'
 
 vi.mock('@29chat/database', () => ({
   roomsQueries: {
-    createRoom: vi.fn(),
+    createRoomWithMember: vi.fn(),
     getRoomById: vi.fn(),
     addRoomMember: vi.fn(),
     removeRoomMember: vi.fn(),
     getRoomMembers: vi.fn(),
     getRoomsByUserId: vi.fn(),
-    getRoomMember: vi.fn(),
+    isRoomMember: vi.fn(),
   },
 }));
 
@@ -23,13 +23,13 @@ import {
   getRoomsByUserId,
 } from '../../../src/services/room.service';
 
-const mockDbCreateRoom = vi.mocked(roomsQueries.createRoom);
+const mockDbCreateRoomWithMember = vi.mocked(roomsQueries.createRoomWithMember);
 const mockDbGetRoomById = vi.mocked(roomsQueries.getRoomById);
 const mockDbAddMember = vi.mocked(roomsQueries.addRoomMember);
 const mockDbRemoveMember = vi.mocked(roomsQueries.removeRoomMember);
 const mockDbGetMembers = vi.mocked(roomsQueries.getRoomMembers);
 const mockDbGetRoomsByUser = vi.mocked(roomsQueries.getRoomsByUserId);
-const mockDbGetRoomMember = vi.mocked(roomsQueries.getRoomMember);
+const mockDbIsRoomMember = vi.mocked(roomsQueries.isRoomMember);
 
 describe('room service', () => {
   beforeEach(() => {
@@ -46,24 +46,19 @@ describe('room service', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockDbCreateRoom.mockResolvedValue(room);
-      mockDbAddMember.mockResolvedValue(undefined as any);
+      const member = { id: 'member-1', roomId: MOCK_ROOM_ID, userId: MOCK_USER_ID, role: 'admin' as const, joinedAt: new Date() };
+      mockDbCreateRoomWithMember.mockResolvedValue({ room, member });
 
       const result = await createRoom('General', 'group', MOCK_USER_ID);
 
-      expect(mockDbCreateRoom).toHaveBeenCalledWith(
+      expect(mockDbCreateRoomWithMember).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'General',
           type: 'group',
           createdBy: MOCK_USER_ID,
-        })
-      );
-      expect(mockDbAddMember).toHaveBeenCalledWith(
-        expect.objectContaining({
-          roomId: MOCK_ROOM_ID,
-          userId: MOCK_USER_ID,
-          role: 'admin',
-        })
+        }),
+        MOCK_USER_ID,
+        'admin',
       );
       expect(result).toEqual(room);
     });
@@ -86,8 +81,8 @@ describe('room service', () => {
     it('adds user as member with role member', async () => {
       const room = { id: MOCK_ROOM_ID, name: 'General', type: 'group' as const, createdBy: MOCK_USER_ID, createdAt: new Date(), updatedAt: new Date() };
       mockDbGetRoomById.mockResolvedValue(room);
-      mockDbGetRoomMember.mockResolvedValue(null);
-      mockDbAddMember.mockResolvedValue(undefined as any);
+      mockDbIsRoomMember.mockResolvedValue(false);
+      mockDbAddMember.mockResolvedValue({ id: 'member-2', roomId: MOCK_ROOM_ID, userId: MOCK_USER_ID_2, role: 'member' as const, joinedAt: new Date() });
 
       await joinRoom(MOCK_ROOM_ID, MOCK_USER_ID_2);
 
@@ -110,7 +105,7 @@ describe('room service', () => {
     it('throws AppError 409 if user is already a member', async () => {
       const room = { id: MOCK_ROOM_ID, name: 'General', type: 'group' as const, createdBy: MOCK_USER_ID, createdAt: new Date(), updatedAt: new Date() };
       mockDbGetRoomById.mockResolvedValue(room);
-      mockDbGetRoomMember.mockResolvedValue({ id: 'member-id', roomId: MOCK_ROOM_ID, userId: MOCK_USER_ID_2, role: 'member' as const, joinedAt: new Date() });
+      mockDbIsRoomMember.mockResolvedValue(true);
 
       await expect(joinRoom(MOCK_ROOM_ID, MOCK_USER_ID_2)).rejects.toThrow(AppError);
       await expect(joinRoom(MOCK_ROOM_ID, MOCK_USER_ID_2)).rejects.toThrow('Already a member');
@@ -121,7 +116,7 @@ describe('room service', () => {
     it('removes user from room members', async () => {
       const room = { id: MOCK_ROOM_ID, name: 'General', type: 'group' as const, createdBy: MOCK_USER_ID, createdAt: new Date(), updatedAt: new Date() };
       mockDbGetRoomById.mockResolvedValue(room);
-      mockDbGetRoomMember.mockResolvedValue({ id: 'member-id', roomId: MOCK_ROOM_ID, userId: MOCK_USER_ID_2, role: 'member' as const, joinedAt: new Date() });
+      mockDbIsRoomMember.mockResolvedValue(true);
       mockDbRemoveMember.mockResolvedValue(undefined as any);
 
       await leaveRoom(MOCK_ROOM_ID, MOCK_USER_ID_2);
@@ -139,7 +134,7 @@ describe('room service', () => {
     it('throws AppError 400 if user is not a member', async () => {
       const room = { id: MOCK_ROOM_ID, name: 'General', type: 'group' as const, createdBy: MOCK_USER_ID, createdAt: new Date(), updatedAt: new Date() };
       mockDbGetRoomById.mockResolvedValue(room);
-      mockDbGetRoomMember.mockResolvedValue(null);
+      mockDbIsRoomMember.mockResolvedValue(false);
 
       await expect(leaveRoom(MOCK_ROOM_ID, MOCK_USER_ID_2)).rejects.toThrow(AppError);
       await expect(leaveRoom(MOCK_ROOM_ID, MOCK_USER_ID_2)).rejects.toThrow('Not a member');
