@@ -22,7 +22,7 @@ describe('socketAuth middleware', () => {
   });
 
   it('calls next() and sets socket.data.userId when token is valid', () => {
-    const socket = createMockSocket();
+    const socket = createMockSocket({ data: {} });
     mockVerify.mockReturnValue({ id: MOCK_USER_ID } as any);
 
     socketAuth(socket as any, next);
@@ -69,6 +69,7 @@ describe('socketAuth middleware', () => {
 
   it('falls back to authorization header if handshake.auth.token is missing', () => {
     const socket = createMockSocket({
+      data: {},
       handshake: {
         auth: {},
         headers: { authorization: 'Bearer header-jwt-token' },
