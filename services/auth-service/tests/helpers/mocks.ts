@@ -1,4 +1,4 @@
-import { ChatUser } from '@29chat/common';
+import { ChatUser } from '@29chat/database';
 
 export function createMockUser(overrides: Partial<ChatUser> = {}): ChatUser {
   return {

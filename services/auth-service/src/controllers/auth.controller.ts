@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import passport from "../passport";
-import { AppError, ChatUser } from "@29chat/common";
+import { AppError } from "@29chat/common";
+import { ChatUser } from "@29chat/database";
 import * as authService from "../services/auth.service";
 import * as tokenService from "../services/token.service";
 import * as userService from "../services/user.service";

@@ -1,6 +1,6 @@
-import { AppError, ChatUser, JWTPayload } from "@29chat/common";
+import { AppError, JWTPayload } from "@29chat/common";
 import jwt from "jsonwebtoken";
-import { refreshTokensQueries } from "@29chat/database";
+import { ChatUser, refreshTokensQueries } from "@29chat/database";
 
 export function createAccessToken(user: ChatUser): string {
   const payload: JWTPayload = { id: user.id };

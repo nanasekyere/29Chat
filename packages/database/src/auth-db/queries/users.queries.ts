@@ -1,20 +1,21 @@
 import { eq } from 'drizzle-orm';
 import db from '..';
 import { usersTable } from '../schema';
-import { ChatUser } from '@29chat/common';
+import { ChatUser, NewChatUser } from '../types';
 
 export const getUserByEmail = async (email: string): Promise<ChatUser | null> => {
   const user = await db.select().from(usersTable).where(eq(usersTable.email, email));
-  return user[0];
+  return user[0] ?? null;
 };
 
 export const getUserById = async (id: string): Promise<ChatUser | null> => {
   const user = await db.select().from(usersTable).where(eq(usersTable.id, id));
-  return user[0] as ChatUser | null;
+  return user[0] ?? null;
 };
 
-export const createUser = async (user: ChatUser) => {
-  await db.insert(usersTable).values(user);
+export const createUser = async (user: NewChatUser): Promise<ChatUser> => {
+  const [created] = await db.insert(usersTable).values(user).returning();
+  return created;
 };
 
 export const updateUser = async (user: ChatUser) => {

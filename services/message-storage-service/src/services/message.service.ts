@@ -1,5 +1,6 @@
 import { messagesQueries } from "@29chat/database";
-import { AppError, Message, NewMessage } from "@29chat/common";
+import { AppError } from "@29chat/common";
+import { Message, NewMessage } from "@29chat/database";
 import * as cache from "./cache.service";
 
 export async function createMessage(msg: NewMessage): Promise<Message> {

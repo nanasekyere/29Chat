@@ -2,10 +2,7 @@ import { eq, and } from "drizzle-orm";
 import db from "..";
 import { roomsTable, roomMembersTable } from "../schema";
 
-type NewRoom = typeof roomsTable.$inferInsert;
-type Room = typeof roomsTable.$inferSelect;
-type NewRoomMember = typeof roomMembersTable.$inferInsert;
-type RoomMember = typeof roomMembersTable.$inferSelect;
+import { Room, NewRoom, RoomMember, NewRoomMember } from "../types";
 
 // Room table
 

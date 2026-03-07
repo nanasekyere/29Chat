@@ -1,4 +1,4 @@
-import { Message } from "@29chat/common"
+import { Message } from "@29chat/database"
 
 export function sendMessage(input: Message) {
 

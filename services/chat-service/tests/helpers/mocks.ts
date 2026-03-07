@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { Message, NewMessage } from '@29chat/common';
+import { Message, NewMessage } from '@29chat/database';
 
 export const MOCK_USER_ID = '00000000-0000-4000-a000-000000000001';
 export const MOCK_USER_ID_2 = '00000000-0000-4000-a000-000000000002';

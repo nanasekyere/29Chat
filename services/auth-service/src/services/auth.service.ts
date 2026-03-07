@@ -1,4 +1,5 @@
-import { ChatUser, AppError } from "@29chat/common";
+import { AppError } from "@29chat/common";
+import { NewChatUser } from "@29chat/database";
 import bcrypt from "bcrypt";
 import { createAccessToken, createRefreshToken } from "./token.service";
 import { usersQueries } from "@29chat/database";
@@ -19,19 +20,15 @@ export async function register({
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const user: ChatUser = {
-    id: crypto.randomUUID(),
+  const newUser: NewChatUser = {
     email,
     password: hashedPassword,
     name,
-    status: "online",
-    lastActive: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
+  let user;
   try {
-    await usersQueries.createUser(user);
+    user = await usersQueries.createUser(newUser);
   } catch (error) {
     const dbError = error as { code?: string };
     if (dbError.code) {

@@ -1,6 +1,7 @@
 import amqplib, { Channel, ChannelModel, ConsumeMessage } from "amqplib";
 import { createMessage } from "../services/message.service";
-import { AppError, NewMessage, createLogger } from "@29chat/common";
+import { AppError, createLogger } from "@29chat/common";
+import { NewMessage } from "@29chat/database";
 
 const logger = createLogger('message-storage-service');
 

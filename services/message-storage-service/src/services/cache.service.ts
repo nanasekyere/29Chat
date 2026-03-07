@@ -1,4 +1,4 @@
-import { Message } from "@29chat/common";
+import { Message } from "@29chat/database";
 import { redis } from "../config/redis";
 
 export async function getMessageCache(msgId: string): Promise<Message | null> {

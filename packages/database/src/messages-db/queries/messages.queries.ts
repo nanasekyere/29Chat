@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import db from "..";
 import { messagesTable } from "../schema";
-import { Message, NewMessage } from "@29chat/common";
+import { Message, NewMessage } from "../types";
 
 export const createMessage = async (msg: NewMessage) => {
   const [message] = await db.insert(messagesTable).values(msg).returning();

@@ -1,4 +1,5 @@
-import { AppError, ChatUser } from "@29chat/common";
+import { AppError } from "@29chat/common";
+import { ChatUser } from "@29chat/database";
 import { usersQueries } from "@29chat/database";
 
 export async function getUser(id: string): Promise<ChatUser> {
