@@ -28,18 +28,15 @@ vi.mock('../../src/config/redis', () => ({
 import { messagesQueries } from '@29chat/database';
 import express from 'express';
 import messageRoutes from '../../src/routes/message.routes';
-import { createErrorMiddleware } from '@29chat/common';
+import { createErrorMiddleware, gatewayAuth } from '@29chat/common';
 
 const OTHER_USER_ID = '00000000-0000-4000-a000-000000000002';
 const NONEXISTENT_ID = '00000000-0000-4000-a000-000000000999';
 
-// Test app that simulates gateway setting req.user
+// Test app that simulates gateway setting x-user-id header
 const app = express();
 app.use(express.json());
-app.use((req, _res, next) => {
-  req.user = { id: MOCK_USER_ID } as Express.User;
-  next();
-});
+app.use(gatewayAuth);
 app.use('/', messageRoutes);
 app.use(createErrorMiddleware('message-storage-service'));
 
@@ -62,7 +59,7 @@ describe('message routes', () => {
       const messages = createMockMessages(3);
       mockGetByRoom.mockResolvedValue(messages);
 
-      const res = await request(app).get(`/${MOCK_ROOM_ID}`);
+      const res = await request(app).get(`/${MOCK_ROOM_ID}`).set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(200);
       expect(res.body.messages).toHaveLength(3);
@@ -71,7 +68,7 @@ describe('message routes', () => {
     it('200 - accepts pagination query params', async () => {
       mockGetByRoom.mockResolvedValue([]);
 
-      const res = await request(app).get(`/${MOCK_ROOM_ID}?limit=10&offset=5`);
+      const res = await request(app).get(`/${MOCK_ROOM_ID}?limit=10&offset=5`).set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(200);
       expect(mockGetByRoom).toHaveBeenCalledWith(MOCK_ROOM_ID, 10, 5);
@@ -80,14 +77,14 @@ describe('message routes', () => {
     it('200 - returns empty array when no messages', async () => {
       mockGetByRoom.mockResolvedValue([]);
 
-      const res = await request(app).get(`/${MOCK_ROOM_ID}`);
+      const res = await request(app).get(`/${MOCK_ROOM_ID}`).set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(200);
       expect(res.body.messages).toEqual([]);
     });
 
     it('400 - invalid roomId', async () => {
-      const res = await request(app).get('/not-a-uuid');
+      const res = await request(app).get('/not-a-uuid').set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(400);
     });
@@ -98,7 +95,7 @@ describe('message routes', () => {
       const msg = createMockMessage();
       mockGetById.mockResolvedValue(msg);
 
-      const res = await request(app).get(`/${MOCK_ROOM_ID}/${MOCK_MSG_ID}`);
+      const res = await request(app).get(`/${MOCK_ROOM_ID}/${MOCK_MSG_ID}`).set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBeDefined();
@@ -108,7 +105,7 @@ describe('message routes', () => {
     it('404 - message not found', async () => {
       mockGetById.mockResolvedValue(null);
 
-      const res = await request(app).get(`/${MOCK_ROOM_ID}/${NONEXISTENT_ID}`);
+      const res = await request(app).get(`/${MOCK_ROOM_ID}/${NONEXISTENT_ID}`).set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(404);
       expect(res.body.message).toBe('Message not found');
@@ -124,6 +121,7 @@ describe('message routes', () => {
 
       const res = await request(app)
         .put(`/${MOCK_MSG_ID}`)
+        .set('x-user-id', MOCK_USER_ID)
         .send({ content: 'Updated content' });
 
       expect(res.status).toBe(200);
@@ -136,6 +134,7 @@ describe('message routes', () => {
 
       const res = await request(app)
         .put(`/${MOCK_MSG_ID}`)
+        .set('x-user-id', MOCK_USER_ID)
         .send({ content: '' });
 
       expect(res.status).toBe(400);
@@ -147,6 +146,7 @@ describe('message routes', () => {
 
       const res = await request(app)
         .put(`/${MOCK_MSG_ID}`)
+        .set('x-user-id', MOCK_USER_ID)
         .send({ content: 'Updated' });
 
       expect(res.status).toBe(403);
@@ -157,6 +157,7 @@ describe('message routes', () => {
 
       const res = await request(app)
         .put(`/${NONEXISTENT_ID}`)
+        .set('x-user-id', MOCK_USER_ID)
         .send({ content: 'Updated' });
 
       expect(res.status).toBe(404);
@@ -170,7 +171,8 @@ describe('message routes', () => {
       mockSoftDelete.mockResolvedValue(undefined);
 
       const res = await request(app)
-        .delete(`/${MOCK_MSG_ID}`);
+        .delete(`/${MOCK_MSG_ID}`)
+        .set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(204);
     });
@@ -180,7 +182,8 @@ describe('message routes', () => {
       mockGetById.mockResolvedValue(existing);
 
       const res = await request(app)
-        .delete(`/${MOCK_MSG_ID}`);
+        .delete(`/${MOCK_MSG_ID}`)
+        .set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(403);
     });
@@ -189,7 +192,8 @@ describe('message routes', () => {
       mockGetById.mockResolvedValue(null);
 
       const res = await request(app)
-        .delete(`/${NONEXISTENT_ID}`);
+        .delete(`/${NONEXISTENT_ID}`)
+        .set('x-user-id', MOCK_USER_ID);
 
       expect(res.status).toBe(404);
     });
