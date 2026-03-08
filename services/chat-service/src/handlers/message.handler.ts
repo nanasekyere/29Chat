@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { MessageEvents } from "@29chat/common";
+import { MessageEvents } from "../types/socket.types";
 import { NewMessage } from "@29chat/database";
 import * as messageService from "../services/message.service";
 

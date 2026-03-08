@@ -6,6 +6,7 @@ export const MOCK_USER_ID_2 = '00000000-0000-4000-a000-000000000002';
 export const MOCK_ROOM_ID = '00000000-0000-4000-a000-000000000010';
 export const MOCK_ROOM_ID_2 = '00000000-0000-4000-a000-000000000020';
 export const MOCK_SOCKET_ID = 'socket-id-abc123';
+export const MOCK_SOCKET_ID_2 = 'socket-id-def456';
 
 export function createMockNewMessage(overrides: Partial<NewMessage> = {}): NewMessage {
   return {

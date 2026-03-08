@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { TypingEvents } from "@29chat/common";
+import { TypingEvents } from "../types/socket.types";
 
 export function registerTypingHandlers(io: Server, socket: Socket) {
   const userId = socket.data.userId as string;

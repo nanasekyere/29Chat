@@ -11,22 +11,25 @@ vi.mock('../../../src/services/room.service', () => ({
   getRoomsByUserId: vi.fn(),
 }));
 
-vi.mock('ioredis', () => {
-  const mockRedis = {
-    publish: vi.fn().mockResolvedValue(1),
-    subscribe: vi.fn().mockResolvedValue(undefined),
-    on: vi.fn(),
-  };
-  return { default: vi.fn(() => mockRedis) };
-});
+const mockRedis = vi.hoisted(() => ({
+  publish: vi.fn().mockResolvedValue(1),
+  subscribe: vi.fn().mockResolvedValue(undefined),
+  on: vi.fn(),
+}));
+
+vi.mock('ioredis', () => ({
+  default: class {
+    publish = mockRedis.publish;
+    subscribe = mockRedis.subscribe;
+    on = mockRedis.on;
+  },
+}));
 
 import * as roomService from '../../../src/services/room.service';
-import Redis from 'ioredis';
 import { registerPresenceHandlers } from '../../../src/handlers/presence.handler';
 
 const mockGetRoomsByUserId = vi.mocked(roomService.getRoomsByUserId);
-const mockRedisInstance = new Redis() as any;
-const mockRedisPublish = vi.mocked(mockRedisInstance.publish);
+const mockRedisPublish = vi.mocked(mockRedis.publish);
 
 describe('presence handler', () => {
   let mockSocket: ReturnType<typeof createMockSocket>;
@@ -134,6 +137,8 @@ describe('presence handler', () => {
       const statusCall = mockSocket.on.mock.calls.find((c: any[]) => c[0] === 'presence:status');
       const statusHandler = statusCall![1];
       const callback = vi.fn();
+
+      vi.clearAllMocks();
 
       await statusHandler({ status: 'invalid-status' }, callback);
 
