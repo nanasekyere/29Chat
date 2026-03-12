@@ -23,7 +23,7 @@ describe('validateRequest(authSchema)', () => {
   const middleware = validateRequest(authSchema);
 
   it('calls next() when email and password are valid', () => {
-    const req = createMockReq({ email: 'test@example.com', password: 'password123' });
+    const req = createMockReq({ email: 'test@example.com', password: 'password123', name: 'Test User' });
     const res = createMockRes();
     const next = vi.fn();
 

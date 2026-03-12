@@ -12,7 +12,6 @@ passport.use(
     async (email, password, done) => {
       try {
         const user = await usersQueries.getUserByEmail(email);
-
         if (!user)
           return done(null, false, { message: "Invalid email or password" });
 

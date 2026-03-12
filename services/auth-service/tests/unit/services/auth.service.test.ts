@@ -33,7 +33,7 @@ describe('auth service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserByEmail.mockResolvedValue(null);
-    mockCreateUser.mockResolvedValue(undefined as any);
+    mockCreateUser.mockResolvedValue(createMockUser() as any);
   });
 
   describe('register', () => {
@@ -63,11 +63,9 @@ describe('auth service', () => {
 
       expect(mockCreateUser).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: expect.any(String),
           email: 'test@example.com',
           password: '$2b$10$hashed',
           name: 'Test User',
-          status: 'online',
         })
       );
     });

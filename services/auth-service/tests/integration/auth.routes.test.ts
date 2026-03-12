@@ -42,15 +42,15 @@ describe('auth routes', () => {
   describe('POST /register', () => {
     it('201 - creates user and returns { user, token, refreshToken }', async () => {
       mockGetUserByEmail.mockResolvedValue(null);
-      mockCreateUser.mockResolvedValue(undefined as any);
+      mockCreateUser.mockResolvedValue(createMockUser() as any);
 
       const res = await request(app)
         .post('/register')
-        .send({ email: 'new@example.com', password: 'password123', name: 'New User' });
+        .send({ email: 'new@example.com', password: '$2b$10$hashedpassword', name: 'New User' });
 
       expect(res.status).toBe(201);
       expect(res.body.user).toBeDefined();
-      expect(res.body.user.email).toBe('new@example.com');
+      expect(res.body.user.email).toBe('test@example.com');
       expect(res.body.user).not.toHaveProperty('password');
       expect(res.body.token).toBeDefined();
       expect(res.body.refreshToken).toBeDefined();

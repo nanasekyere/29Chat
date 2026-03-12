@@ -15,7 +15,7 @@ export const getUserById = async (id: string): Promise<ChatUser | null> => {
 
 export const createUser = async (user: NewChatUser): Promise<ChatUser> => {
   const [created] = await db.insert(usersTable).values(user).returning();
-  return created;
+  return created as ChatUser;
 };
 
 export const updateUser = async (user: ChatUser) => {

@@ -26,20 +26,20 @@ export async function register({
     name,
   };
 
-  let user;
   try {
-    user = await usersQueries.createUser(newUser);
+    const user = await usersQueries.createUser(newUser);
+    if (!user) throw new AppError("Failed to create user on db", 500);
+    const token = createAccessToken(user);
+    const refreshToken = await createRefreshToken(user);
+    const { password: _, ...sanitizedUser } = user;
+
+    return { user: sanitizedUser, token, refreshToken };
   } catch (error) {
+    if (error instanceof AppError) throw error;
     const dbError = error as { code?: string };
     if (dbError.code) {
       throw new AppError("Email already registered", 409);
     }
     throw new AppError("Failed to create user", 500);
   }
-
-  const token = createAccessToken(user);
-  const refreshToken = await createRefreshToken(user);
-  const { password: _, ...sanitizedUser } = user;
-
-  return { user: sanitizedUser, token, refreshToken };
 }
