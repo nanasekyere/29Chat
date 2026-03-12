@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, isNull, and, desc } from "drizzle-orm";
 import db from "..";
 import { messagesTable } from "../schema";
 import { Message, NewMessage } from "../types";
@@ -12,7 +12,8 @@ export const getMessageById = async (id: string) => {
   const message = await db
     .select()
     .from(messagesTable)
-    .where(eq(messagesTable.id, id));
+    .where(and(eq(messagesTable.id, id), isNull(messagesTable.deletedAt)))
+    .orderBy(desc(messagesTable.createdAt));
   return message[0] as Message | null;
 };
 
@@ -24,9 +25,10 @@ export const getMessagesByRoomId = async (
   const messages = await db
     .select()
     .from(messagesTable)
-    .where(eq(messagesTable.roomId, roomId))
+    .where(and(eq(messagesTable.roomId, roomId), isNull(messagesTable.deletedAt)))
     .limit(limit)
-    .offset(offset);
+    .offset(offset)
+    .orderBy(desc(messagesTable.createdAt));
   return messages as Message[];
 };
 
@@ -40,5 +42,5 @@ export const updateMessage = async (msg: Message) => {
 };
 
 export const softDeleteMessage = async (id: string) => {
-  await db.delete(messagesTable).where(eq(messagesTable.id, id));
+  await db.update(messagesTable).set({ deletedAt: new Date()}).where(eq(messagesTable.id, id));
 };
