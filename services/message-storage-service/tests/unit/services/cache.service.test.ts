@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockMessage, createMockMessages } from '../../helpers/mocks';
 
+const mockPipeline = vi.hoisted(() => ({
+  del: vi.fn(),
+  exec: vi.fn(),
+}));
+
+const mockScanStream = vi.hoisted(() => vi.fn());
+
 const mockRedisClient = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
   del: vi.fn(),
-  keys: vi.fn(),
+  pipeline: vi.fn(() => mockPipeline),
+  scanStream: mockScanStream,
 }));
 
 vi.mock('../../../src/config/redis', () => ({
@@ -109,15 +117,41 @@ describe('cache service', () => {
   });
 
   describe('invalidateRoomMessagesCache', () => {
-    it('finds keys by pattern and deletes them', async () => {
+    it('scans keys by pattern and deletes them via pipeline', async () => {
       const keys = ['room:00000000-0000-4000-a000-000000000010:messages:50:0', 'room:00000000-0000-4000-a000-000000000010:messages:50:50'];
-      mockRedisClient.keys.mockResolvedValue(keys);
-      mockRedisClient.del.mockResolvedValue(2);
+
+      let dataHandler: (keys: string[]) => void;
+      let endHandler: () => void;
+
+      mockScanStream.mockReturnValue({
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          if (event === 'data') dataHandler = handler;
+          if (event === 'end') endHandler = handler;
+        }),
+      });
 
       await invalidateRoomMessagesCache('00000000-0000-4000-a000-000000000010');
 
-      expect(mockRedisClient.keys).toHaveBeenCalledWith('room:00000000-0000-4000-a000-000000000010:messages:*');
-      expect(mockRedisClient.del).toHaveBeenCalledWith(...keys);
+      dataHandler!(keys);
+      endHandler!();
+
+      expect(mockRedisClient.scanStream).toHaveBeenCalledWith({ match: 'room:00000000-0000-4000-a000-000000000010:messages:*' });
+      expect(mockRedisClient.pipeline).toHaveBeenCalled();
+      expect(mockPipeline.del).toHaveBeenCalledWith(...keys);
+      expect(mockPipeline.exec).toHaveBeenCalled();
+    });
+
+    it('skips pipeline when scan returns no keys', async () => {
+      mockScanStream.mockReturnValue({
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          if (event === 'data') handler([]);
+          if (event === 'end') handler();
+        }),
+      });
+
+      await invalidateRoomMessagesCache('00000000-0000-4000-a000-000000000010');
+
+      expect(mockRedisClient.pipeline).not.toHaveBeenCalled();
     });
   });
 });

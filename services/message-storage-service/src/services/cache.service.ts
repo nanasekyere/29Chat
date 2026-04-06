@@ -38,6 +38,19 @@ export async function invalidateMessageCache(msgId: string) {
 }
 
 export async function invalidateRoomMessagesCache(roomId: string) {
-  const keys = await redis.keys(`room:${roomId}:messages:*`);
-  if (keys.length) await redis.del(...keys);
+  const stream = redis.scanStream({
+    match: `room:${roomId}:messages:*`
+  });
+
+  stream.on('data', (keys) => {
+    if (keys.length) {
+      const pipeline = redis.pipeline();
+      pipeline.del(...keys)
+      pipeline.exec();
+    }
+  });
+
+  stream.on('end', () => {
+    console.log("Room messages invalidated")
+  })
 }
