@@ -4,9 +4,12 @@ import { AppError } from '@29chat/common';
 const { mockChannel, mockConnection } = vi.hoisted(() => {
   const mockChannel = {
     assertQueue: vi.fn(),
+    assertExchange: vi.fn(),
+    bindQueue: vi.fn(),
     consume: vi.fn(),
     ack: vi.fn(),
     nack: vi.fn(),
+    sendToQueue: vi.fn(),
     close: vi.fn(),
     prefetch: vi.fn(),
   };
@@ -57,10 +60,29 @@ describe('message consumer', () => {
       expect(mockConnection.createChannel).toHaveBeenCalled();
     });
 
-    it('asserts queue "messages.new"', async () => {
+    it('asserts DLX exchange', async () => {
       await startConsumer();
 
-      expect(mockChannel.assertQueue).toHaveBeenCalledWith('messages.new', { durable: true });
+      expect(mockChannel.assertExchange).toHaveBeenCalledWith('messages.dlx', 'direct', { durable: true });
+    });
+
+    it('asserts dead letter queue and binds it to DLX', async () => {
+      await startConsumer();
+
+      expect(mockChannel.assertQueue).toHaveBeenCalledWith('messages.dead', { durable: true });
+      expect(mockChannel.bindQueue).toHaveBeenCalledWith('messages.dead', 'messages.dlx', 'messages.new');
+    });
+
+    it('asserts queue "messages.new" with DLX arguments', async () => {
+      await startConsumer();
+
+      expect(mockChannel.assertQueue).toHaveBeenCalledWith('messages.new', {
+        durable: true,
+        arguments: {
+          'x-dead-letter-exchange': 'messages.dlx',
+          'x-dead-letter-routing-key': 'messages.new',
+        },
+      });
     });
 
     it('calls consume on the queue', async () => {
@@ -79,7 +101,7 @@ describe('message consumer', () => {
     it('parses JSON buffer, calls messageService.createMessage, and acks', async () => {
       const handler = await getHandleMessage();
       const messageData = { roomId: 'room-1', senderId: 'user-1', content: 'Hello', contentType: 'text' };
-      const msg = { content: Buffer.from(JSON.stringify(messageData)) };
+      const msg = { content: Buffer.from(JSON.stringify(messageData)), properties: { headers: {} } };
       mockCreateMessage.mockResolvedValue({} as any);
 
       await handler(msg);
@@ -90,22 +112,44 @@ describe('message consumer', () => {
 
     it('nacks with requeue=false on invalid JSON', async () => {
       const handler = await getHandleMessage();
-      const msg = { content: Buffer.from('not json') };
+      const msg = { content: Buffer.from('not json'), properties: { headers: {} } };
 
       await handler(msg);
 
       expect(mockChannel.nack).toHaveBeenCalledWith(msg, false, false);
     });
 
-    it('nacks with requeue=true on service error', async () => {
+    it('retries on AppError and dead-letters after max retries', async () => {
       const handler = await getHandleMessage();
       const messageData = { roomId: 'room-1', senderId: 'user-1', content: 'Hello', contentType: 'text' };
-      const msg = { content: Buffer.from(JSON.stringify(messageData)) };
+      const msg = {
+        content: Buffer.from(JSON.stringify(messageData)),
+        properties: { headers: { 'x-retry-count': 3 } },
+      };
       mockCreateMessage.mockRejectedValue(new AppError('Service failure'));
 
       await handler(msg);
 
-      expect(mockChannel.nack).toHaveBeenCalledWith(msg, false, true);
+      expect(mockChannel.nack).toHaveBeenCalledWith(msg, false, false);
+    });
+
+    it('sends message back to queue on AppError when retries remain', async () => {
+      const handler = await getHandleMessage();
+      const messageData = { roomId: 'room-1', senderId: 'user-1', content: 'Hello', contentType: 'text' };
+      const msg = {
+        content: Buffer.from(JSON.stringify(messageData)),
+        properties: { headers: { 'x-retry-count': 0 } },
+      };
+      mockCreateMessage.mockRejectedValue(new AppError('Service failure'));
+
+      await handler(msg);
+
+      expect(mockChannel.ack).toHaveBeenCalledWith(msg);
+      expect(mockChannel.sendToQueue).toHaveBeenCalledWith(
+        'messages.new',
+        msg.content,
+        { persistent: true, headers: { 'x-retry-count': 1 } }
+      );
     });
   });
 

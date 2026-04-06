@@ -13,7 +13,13 @@ class RabbitManager {
     this.connection = await amqplib.connect(this.url);
     this.channel = await this.connection.createChannel();
 
-    await this.channel.assertQueue(this.QUEUE, { durable: true });
+    await this.channel.assertQueue(this.QUEUE, {
+      durable: true,
+      arguments: {
+        "x-dead-letter-exchange": "messages.dlx",
+        "x-dead-letter-routing-key": this.QUEUE,
+      },
+    });
 
     this.logger.info("RabbitMQ initialised")
 

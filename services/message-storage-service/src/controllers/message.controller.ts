@@ -42,7 +42,7 @@ export async function updateMessage(
   try {
     const messageId = req.params.messageId as string;
     const content = req.body.content as string;
-    const userId = req.user!.id; // User is attached by gateway
+    const userId = req.headers['x-user-id'] as string // UserID is forwarded by gateway
 
     const updatedMsg = await msgService.updateMessage(
       messageId,
@@ -63,7 +63,7 @@ export async function deleteMessage(
 ) {
   try {
     const messageId = req.params.messageId as string;
-    const userId = req.user!.id; // User is attached by gateway
+    const userId = req.headers['x-user-id'] as string  // UserID is forwarded by gateway
 
     await msgService.softDeleteMessage(messageId, userId);
 
