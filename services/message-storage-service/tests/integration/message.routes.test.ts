@@ -14,12 +14,18 @@ vi.mock('@29chat/database', () => ({
 }));
 
 // Mock Redis client
-const mockRedisClient = vi.hoisted(() => ({
-  get: vi.fn(),
-  set: vi.fn(),
-  del: vi.fn(),
-  keys: vi.fn(),
-}));
+const mockRedisClient = vi.hoisted(() => {
+  const mockPipeline = { del: vi.fn(), exec: vi.fn() };
+  const mockStream = { on: vi.fn().mockImplementation(function(this: any, _event: string, _cb: Function) { return this; }) };
+  return {
+    get: vi.fn(),
+    set: vi.fn(),
+    del: vi.fn(),
+    keys: vi.fn(),
+    scanStream: vi.fn().mockReturnValue(mockStream),
+    pipeline: vi.fn().mockReturnValue(mockPipeline),
+  };
+});
 
 vi.mock('../../src/config/redis', () => ({
   redis: mockRedisClient,

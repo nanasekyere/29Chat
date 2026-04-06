@@ -7,7 +7,7 @@ export async function createRoom(
   next: NextFunction,
 ): Promise<void> {
   const { name, type } = req.body;
-  const userId = req.user!.id;
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     const room = await roomService.createRoom(name, type, userId);
@@ -22,7 +22,7 @@ export async function getRooms(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const userId = req.user!.id;
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     const rooms = await roomService.getRoomsByUserId(userId);
@@ -38,7 +38,7 @@ export async function joinRoom(
   next: NextFunction,
 ): Promise<void> {
   const roomId = req.params.roomId as string;
-  const userId = req.user!.id;
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     await roomService.joinRoom(roomId, userId);
@@ -54,7 +54,7 @@ export async function leaveRoom(
   next: NextFunction,
 ): Promise<void> {
   const roomId = req.params.roomId as string;
-  const userId = req.user!.id;
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     await roomService.leaveRoom(roomId, userId);

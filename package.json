@@ -4,6 +4,7 @@
     "services/*"
   ],
   "dependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "amqplib": "^0.10.9",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-signature": "^1.1.2",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/http-proxy-middleware": "^0.19.3",
@@ -35,6 +37,7 @@
     "@types/passport-local": "~1.0.38",
     "@types/pg": "^8.16.0",
     "@types/supertest": "^6.0.3",
+    "cookie-signature": "^1.2.2",
     "dotenv": "^17.2.4",
     "drizzle-kit": "^0.31.8",
     "supertest": "^7.2.2",
@@ -53,6 +56,7 @@
     "build:message-storage-service": "tsc -p services/message-storage-service/tsconfig.json",
     "build:presence-service": "tsc -p services/presence-service/tsconfig.json",
     "postinstall": "typesync || true",
-    "test": "npm test --workspaces --if-present"
+    "test": "npm test --workspaces --if-present",
+    "test:all": "vitest run --workspace vitest.workspace.ts"
   }
 }

@@ -11,6 +11,20 @@ export const jwtAuth = (req: Request, res: Response, next: NextFunction) => {
     return next();
   }
 
+  if (req.path === '/api/auth/refresh') {
+    const refreshToken = req.signedCookies?.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'No refresh token' });
+    }
+    try {
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as JWTPayload;
+      req.user = decoded;
+      return next();
+    } catch {
+      return res.status(401).json({ message: 'Invalid or expired refresh token' });
+    }
+  }
+
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
     return res.status(401).json({ message: 'Unauthorized' });

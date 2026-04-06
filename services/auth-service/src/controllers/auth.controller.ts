@@ -1,10 +1,18 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, CookieOptions } from "express";
 import passport from "../passport";
 import { AppError } from "@29chat/common";
 import { ChatUser } from "@29chat/database";
 import * as authService from "../services/auth.service";
 import * as tokenService from "../services/token.service";
 import * as userService from "../services/user.service";
+
+const COOKIE_PROPS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "strict",
+  signed: true,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+} as CookieOptions;
 
 export async function register(
   req: Request,
@@ -19,7 +27,10 @@ export async function register(
       password,
       name,
     });
-    res.status(201).json({ user, token, refreshToken });
+    res
+      .status(201)
+      .cookie("refreshToken", refreshToken, COOKIE_PROPS)
+      .json({ user, token });
   } catch (error) {
     next(error);
   }
@@ -37,7 +48,11 @@ export function login(req: Request, res: Response, next: NextFunction): void {
       const token = tokenService.createAccessToken(user);
       const refreshToken = await tokenService.createRefreshToken(user);
       const { password: _, ...sanitizedUser } = user;
-      res.status(200).json({ user: sanitizedUser, token, refreshToken });
+
+      res
+        .status(200)
+        .cookie("refreshToken", refreshToken, COOKIE_PROPS)
+        .json({ user: sanitizedUser, token });
     },
   )(req, res, next);
 }
@@ -47,10 +62,15 @@ export async function refreshToken(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const { refreshToken } = req.body;
-  const { id } = req.user!
+  const { refreshToken } = req.signedCookies;
+  const id = req.headers["x-user-id"] as string;
 
   try {
+    if (!refreshToken) return next(new AppError("No refresh token", 401));
+
+    const isValid = await tokenService.isRefreshTokenValid(id, refreshToken);
+    if (!isValid) throw new AppError("Refresh token revoked or invalid", 401);
+
     await tokenService.revokeRefreshToken(id, refreshToken);
 
     const user = await userService.getUser(id);
@@ -60,13 +80,13 @@ export async function refreshToken(
 
     res
       .status(200)
+      .cookie("refreshToken", newRefreshToken, COOKIE_PROPS)
       .json({
         user: sanitizedUser,
         token: newAccessToken,
-        refreshToken: newRefreshToken,
       });
-
   } catch (error) {
+    res.clearCookie("refreshToken");
     if (error instanceof AppError) return next(error);
     return next(new AppError("Refresh token revoked or invalid", 401));
   }
@@ -75,10 +95,10 @@ export async function refreshToken(
 export async function logout(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
-    await tokenService.revokeAllRefreshTokens(req.user!.id);
+    await tokenService.revokeAllRefreshTokens(req.headers['x-user-id'] as string);
     res.status(204).send();
   } catch (error) {
     if (error instanceof AppError) return next(error);

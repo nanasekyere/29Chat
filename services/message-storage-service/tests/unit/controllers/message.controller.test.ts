@@ -22,7 +22,7 @@ function createMockReq(overrides: any = {}) {
     params: {},
     query: {},
     body: {},
-    user: { id: '00000000-0000-4000-a000-000000000001' },
+    headers: { 'x-user-id': '00000000-0000-4000-a000-000000000001' },
     ...overrides,
   } as any;
 }

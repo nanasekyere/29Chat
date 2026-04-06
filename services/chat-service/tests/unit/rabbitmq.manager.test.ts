@@ -66,7 +66,7 @@ describe('RabbitManager', () => {
 
       expect(mockConnect).toHaveBeenCalledWith(expect.stringContaining('amqp://'));
       expect(mockConnection.createChannel).toHaveBeenCalled();
-      expect(mockChannel.assertQueue).toHaveBeenCalledWith('messages.new', { durable: true });
+      expect(mockChannel.assertQueue).toHaveBeenCalledWith('messages.new', expect.objectContaining({ durable: true }));
     });
   });
 

@@ -10,6 +10,11 @@ if (!process.env.JWT_SECRET) {
   process.exit(1);
 }
 
+if (!process.env.COOKIE_SECRET) {
+  logger.error('COOKIE_SECRET is not set in environment variables');
+  process.exit(1);
+}
+
 app.listen(port, () => {
   logger.info(`Gateway Service is running on port ${port}`);
 });

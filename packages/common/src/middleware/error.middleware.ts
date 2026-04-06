@@ -18,12 +18,12 @@ export const createErrorMiddleware = (
     }
 
     if (err instanceof AppError) {
-      log.warn('App error', { statusCode: err.statusCode, message: err.message });
+      log.warn('App Error:', { statusCode: err.statusCode, message: err.message });
       res.status(err.statusCode).json({ message: err.message });
       return;
     }
 
-    log.error('Unhandled error', { error: err.message, stack: err.stack });
+    log.error('Unhandled Error:', { error: err.message, stack: err.stack });
     const statusCode = 500;
     const message = process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message;
     res.status(statusCode).json({ message });

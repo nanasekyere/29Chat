@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import cookieSignature from 'cookie-signature';
 import { createMockUser } from '../helpers/mocks';
 
 // Mock database
@@ -30,30 +31,40 @@ const mockDeleteRefreshToken = vi.mocked(refreshTokensQueries.deleteRefreshToken
 const mockSaveRefreshToken = vi.mocked(refreshTokensQueries.saveRefreshToken);
 const mockDeleteRefreshTokenByUserId = vi.mocked(refreshTokensQueries.deleteRefreshTokenByUserId);
 
+const COOKIE_SECRET = 'test-cookie-secret';
+
+function signedCookieHeader(name: string, value: string): string {
+  return `${name}=s:${cookieSignature.sign(value, COOKIE_SECRET)}`;
+}
+
 describe('auth routes', () => {
   beforeEach(() => {
     process.env.JWT_SECRET = 'test-secret';
     process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
     process.env.JWT_EXPIRES_IN = '1h';
     process.env.JWT_REFRESH_EXPIRES_IN = '7d';
+    process.env.COOKIE_SECRET = COOKIE_SECRET;
     vi.clearAllMocks();
   });
 
   describe('POST /register', () => {
-    it('201 - creates user and returns { user, token, refreshToken }', async () => {
+    it('201 - creates user, returns { user, token } and sets refreshToken cookie', async () => {
       mockGetUserByEmail.mockResolvedValue(null);
       mockCreateUser.mockResolvedValue(createMockUser() as any);
+      mockSaveRefreshToken.mockResolvedValue(undefined as any);
 
       const res = await request(app)
         .post('/register')
-        .send({ email: 'new@example.com', password: '$2b$10$hashedpassword', name: 'New User' });
+        .send({ email: 'new@example.com', password: 'password123', name: 'New User' });
 
       expect(res.status).toBe(201);
       expect(res.body.user).toBeDefined();
       expect(res.body.user.email).toBe('test@example.com');
       expect(res.body.user).not.toHaveProperty('password');
       expect(res.body.token).toBeDefined();
-      expect(res.body.refreshToken).toBeDefined();
+      expect(res.body.refreshToken).toBeUndefined();
+      expect(res.headers['set-cookie']).toBeDefined();
+      expect(([] as string[]).concat(res.headers['set-cookie']).some((c) => c.startsWith('refreshToken='))).toBe(true);
     });
 
     it('409 - returns error when email already registered', async () => {
@@ -93,10 +104,11 @@ describe('auth routes', () => {
   });
 
   describe('POST /login', () => {
-    it('200 - returns { user, token, refreshToken } with no password', async () => {
+    it('200 - returns { user, token } with no password and sets refreshToken cookie', async () => {
       const realHash = await bcrypt.hash('password123', 10);
       const user = createMockUser({ password: realHash });
       mockGetUserByEmail.mockResolvedValue(user);
+      mockSaveRefreshToken.mockResolvedValue(undefined as any);
 
       const res = await request(app)
         .post('/login')
@@ -106,7 +118,9 @@ describe('auth routes', () => {
       expect(res.body.user).toBeDefined();
       expect(res.body.user).not.toHaveProperty('password');
       expect(res.body.token).toBeDefined();
-      expect(res.body.refreshToken).toBeDefined();
+      expect(res.body.refreshToken).toBeUndefined();
+      expect(res.headers['set-cookie']).toBeDefined();
+      expect(([] as string[]).concat(res.headers['set-cookie']).some((c) => c.startsWith('refreshToken='))).toBe(true);
     });
 
     it('401 - returns error for wrong email', async () => {
@@ -153,7 +167,7 @@ describe('auth routes', () => {
       );
     }
 
-    it('200 - returns new access token and rotated refresh token', async () => {
+    it('200 - returns new access token and rotates refreshToken cookie', async () => {
       const refreshToken = createValidRefreshToken();
       mockFindRefreshToken.mockResolvedValue({ token: refreshToken } as any);
       mockGetUserById.mockResolvedValue(user);
@@ -162,64 +176,46 @@ describe('auth routes', () => {
 
       const res = await request(app)
         .post('/refresh')
-        .send({ refreshToken });
+        .set('Cookie', signedCookieHeader('refreshToken', refreshToken))
+        .set('x-user-id', user.id);
 
       expect(res.status).toBe(200);
       expect(res.body.token).toBeDefined();
-      expect(res.body.refreshToken).toBeDefined();
-      // expect rotation
+      expect(res.body.refreshToken).toBeUndefined();
+      expect(([] as string[]).concat(res.headers['set-cookie']).some((c) => c.startsWith('refreshToken='))).toBe(true);
       expect(mockDeleteRefreshToken).toHaveBeenCalledWith(user.id, refreshToken);
       expect(mockSaveRefreshToken).toBeCalled();
     });
 
-    it('401 - rejects expired refresh token', async () => {
-      const expiredToken = jwt.sign(
-        { id: user.id },
-        process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: '0s' }
-      );
-
+    it('401 - rejects when no refresh token cookie', async () => {
       const res = await request(app)
         .post('/refresh')
-        .send({ refreshToken: expiredToken });
+        .set('x-user-id', user.id);
 
       expect(res.status).toBe(401);
     });
 
-    it('401 - rejects invalid refresh token', async () => {
-      const res = await request(app)
-        .post('/refresh')
-        .send({ refreshToken: 'totally-invalid-token' });
-
-      expect(res.status).toBe(401);
-    });
-
-    it('401 - rejects refresh token not found in DB', async () => {
-      const refreshToken = createValidRefreshToken();
+    it('401 - rejects when token is not found in DB (expired or revoked)', async () => {
+      const token = createValidRefreshToken();
       mockFindRefreshToken.mockResolvedValue(null as any);
 
       const res = await request(app)
         .post('/refresh')
-        .send({ refreshToken });
+        .set('Cookie', signedCookieHeader('refreshToken', token))
+        .set('x-user-id', user.id);
 
       expect(res.status).toBe(401);
     });
   });
 
   describe('POST /logout', () => {
-    it('204 - invalidates refresh token in DB', async () => {
+    it('204 - revokes all refresh tokens for the user', async () => {
       const user = createMockUser();
-      const refreshToken = jwt.sign(
-        { id: user.id },
-        process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: '7d' }
-      );
-      mockFindRefreshToken.mockResolvedValue({ token: refreshToken } as any);
       mockDeleteRefreshTokenByUserId.mockResolvedValue(undefined as any);
 
       const res = await request(app)
         .post('/logout')
-        .send({ refreshToken });
+        .set('x-user-id', user.id);
 
       expect(res.status).toBe(204);
       expect(mockDeleteRefreshTokenByUserId).toHaveBeenCalledWith(user.id);

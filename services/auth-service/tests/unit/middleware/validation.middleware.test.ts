@@ -119,7 +119,7 @@ describe('validateRefreshToken', () => {
     );
   });
 
-  it('sets req.user and calls next() when token is valid', async () => {
+  it('calls next() when token is valid', async () => {
     mockedVerify.mockReturnValue({ id: 'user-123' });
     mockedIsValid.mockResolvedValue(true);
 
@@ -131,7 +131,6 @@ describe('validateRefreshToken', () => {
 
     expect(mockedVerify).toHaveBeenCalledWith('valid-token');
     expect(mockedIsValid).toHaveBeenCalledWith('user-123', 'valid-token');
-    expect(req.user).toEqual({ id: 'user-123' });
     expect(next).toHaveBeenCalledWith();
   });
 

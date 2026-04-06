@@ -7,7 +7,7 @@ export enum MessageEvents {
 
 export enum TypingEvents {
   start = "typing:start",
-  stop = "type:stop"
+  stop = "typing:stop"
 }
 
 export enum PresenceEvents {

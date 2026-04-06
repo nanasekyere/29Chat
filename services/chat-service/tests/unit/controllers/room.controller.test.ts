@@ -18,7 +18,7 @@ function createMockReq(overrides: Partial<Request> = {}): Request {
   return {
     body: {},
     params: {},
-    user: { id: MOCK_USER_ID },
+    headers: { 'x-user-id': MOCK_USER_ID },
     ...overrides,
   } as unknown as Request;
 }

@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import cookieParser from 'cookie-parser'
 import { createLogger, createErrorMiddleware } from '@29chat/common';
 import { jwtAuth } from './middleware/auth.middleware';
 import proxyMiddleware from './middleware/proxy.middleware';
@@ -12,6 +13,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req: Request, res: Response, next: NextFunction) => {

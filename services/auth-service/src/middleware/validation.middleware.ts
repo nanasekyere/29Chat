@@ -40,8 +40,6 @@ export const validateRefreshToken = async (
     if (!valid) {
       throw new AppError("Refresh token revoked", 401);
     }
-
-    req.user = {id: payload.id}
     next();
   } catch (error) {
     if (error instanceof AppError) return next(error);
